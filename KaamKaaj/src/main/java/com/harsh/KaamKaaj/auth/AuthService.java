@@ -7,6 +7,7 @@ import com.harsh.KaamKaaj.auth.dto.LoginResponse;
 import com.harsh.KaamKaaj.auth.dto.RegisterRequest;
 //import com.harsh.KaamKaaj.security.jwt.JWTService;
 import com.harsh.KaamKaaj.model.UserPrincipal;
+import com.harsh.KaamKaaj.security.jwt.JWTService;
 import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.user.UserRepo;
 import com.harsh.KaamKaaj.user.mapper.UserMapper;
@@ -28,15 +29,16 @@ public class AuthService {
     private final BCryptPasswordEncoder encoder;
 
 
-//    JWTService jwtService;
+     private final JWTService jwtService;
 
     private final AuthenticationManager authenticationManager;
-    public AuthService(UserRepo userRepo, UserMapper userMapper, BCryptPasswordEncoder encoder, AuthenticationManager authenticationManager) {
+    public AuthService(UserRepo userRepo, UserMapper userMapper, BCryptPasswordEncoder encoder, JWTService jwtService, AuthenticationManager authenticationManager) {
         this.userRepo = userRepo;
 
         this.encoder = encoder;
 
         this.userMapper = userMapper;
+        this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
     }
 
@@ -73,16 +75,31 @@ public class AuthService {
 ////        }
 //        return "Failure";
 //    }
-    public LoginResponse login(LoginRequest request){
-        String email = request.getEmail().trim().toLowerCase();
+public LoginResponse login(LoginRequest request) {
 
+    String normalizedEmail = request.getEmail().trim().toLowerCase();
 
-        Authentication auth =
-                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email,request.getPassword()));
+    Authentication auth = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(normalizedEmail, request.getPassword())
+    );
 
-        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
-        return new LoginResponse(principal.getUsername());
+    UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
 
+    String principalEmail = principal.getUsername(); // in your setup this returns email
+    String userId = principal.getUserId();
 
-    }
+    String role = principal.getAuthorities()
+            .iterator()
+            .next()
+            .getAuthority();
+
+    String token = jwtService.generateToken(principalEmail, userId, role);
+
+    return new LoginResponse(
+            token,
+            "Bearer",
+            jwtService.getJwtExpiration(),
+            principalEmail
+    );
+}
 }
