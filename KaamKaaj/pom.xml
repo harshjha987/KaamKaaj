@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.harsh</groupId>
-	<artifactId>KaamKaaj</artifactId>
+	<artifactId>kaamkaaj</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>KaamKaaj</name>
 	<description>Task Management system</description>

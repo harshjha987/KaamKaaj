@@ -1,9 +1,8 @@
-package com.harsh.KaamKaaj.service;
+package com.harsh.KaamKaaj.security;
 
 import com.harsh.KaamKaaj.model.UserPrincipal;
-import com.harsh.KaamKaaj.model.Users;
-import com.harsh.KaamKaaj.repository.UserRepo;
-import org.jspecify.annotations.NonNull;
+import com.harsh.KaamKaaj.user.User;
+import com.harsh.KaamKaaj.user.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,17 +12,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class MyUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepo userRepo;
+    private final UserRepo userRepo;
 
+    public MyUserDetailsService(UserRepo userRepo) {
+        this.userRepo = userRepo;
+    }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Users user = userRepo.findByUsername(username);
-        if (user == null) {
-            System.out.println("User Not Found");
-            throw new UsernameNotFoundException("user not found");
-        }
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepo.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         return new UserPrincipal(user);
     }
