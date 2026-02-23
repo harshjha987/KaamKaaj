@@ -1,6 +1,6 @@
 package com.harsh.KaamKaaj.security;
 
-//import com.harsh.KaamKaaj.security.jwt.JwtFilter;
+import com.harsh.KaamKaaj.security.jwt.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +26,8 @@ public class SecurityConfig {
     private UserDetailsService userDetailsService;
 
 
-    //private JwtFilter jwtFilter;
+    @Autowired
+    private  JwtFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
@@ -43,7 +44,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(form -> form.disable())
-//                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
         //http.formLogin(Customizer.withDefaults());
 

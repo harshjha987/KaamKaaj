@@ -10,7 +10,10 @@ import com.harsh.KaamKaaj.model.UserPrincipal;
 import com.harsh.KaamKaaj.security.jwt.JWTService;
 import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.user.UserRepo;
+import com.harsh.KaamKaaj.user.dto.UserResponse;
 import com.harsh.KaamKaaj.user.mapper.UserMapper;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -102,4 +105,29 @@ public LoginResponse login(LoginRequest request) {
             principalEmail
     );
 }
+
+public UserResponse getProfile(String email){
+    User user = userRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    return userMapper.toUserResponse(user);
+}
+
+    public String logout(HttpServletResponse response) {
+
+        Cookie cookie = new Cookie("jwt", null);
+
+
+        cookie.setMaxAge(0);
+
+
+        cookie.setPath("/");
+
+
+        cookie.setHttpOnly(true);
+
+        response.addCookie(cookie);
+
+        return "Logged out successfully";
+    }
 }

@@ -4,6 +4,7 @@ package com.harsh.KaamKaaj.user.mapper;
 import com.harsh.KaamKaaj.auth.dto.AuthResponse;
 import com.harsh.KaamKaaj.auth.dto.RegisterRequest;
 import com.harsh.KaamKaaj.user.User;
+import com.harsh.KaamKaaj.user.dto.UserResponse;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,6 +20,10 @@ public class UserMapper {
 
     public AuthResponse toResponse(User user) {
         return new AuthResponse(user.getId(), user.getUsername(), user.getEmail(), user.isEmailVerified());
+    }
+
+    public UserResponse toUserResponse(User user){
+        return new UserResponse(user.getEmail(),user.getUsername());
     }
 
 
