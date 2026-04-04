@@ -18,7 +18,9 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        return Collections.singleton(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
     }
 
     @Override
@@ -32,9 +34,20 @@ public class UserPrincipal implements UserDetails {
         return user.getEmail();
     }
 
-    @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return true; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
     @Override
     public boolean isEnabled() {
@@ -42,6 +55,16 @@ public class UserPrincipal implements UserDetails {
     }
 
 
-    public String getUserId() { return user.getId().toString(); }
-    public User getUser() { return user; } // avoid exposing this in controller though
+    public String getUserId() {
+        return user.getId();
+    }
+
+    public String getRole() {
+        return user.getRole().name();
+    }
+
+    public User getUser() {
+        return user;
+    }
+
 }

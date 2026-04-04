@@ -33,4 +33,10 @@ public class User {
 
 
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 10)
+    private Role role = Role.USER;
+
+
+
 }
