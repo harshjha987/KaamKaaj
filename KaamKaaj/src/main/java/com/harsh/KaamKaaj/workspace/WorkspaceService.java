@@ -1,10 +1,12 @@
 package com.harsh.KaamKaaj.workspace;
 
+import com.harsh.KaamKaaj.exception.DuplicateResourceException;
 import com.harsh.KaamKaaj.exception.ResourceNotFoundException;
 import com.harsh.KaamKaaj.exception.WorkspaceAccessDeniedException;
 import com.harsh.KaamKaaj.model.UserPrincipal;
 import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.user.UserRepo;
+import com.harsh.KaamKaaj.workspace.dto.ChangeRoleRequest;
 import com.harsh.KaamKaaj.workspace.dto.CreateWorkspaceRequest;
 import com.harsh.KaamKaaj.workspace.dto.MemberResponse;
 import com.harsh.KaamKaaj.workspace.dto.WorkspaceResponse;
@@ -34,7 +36,7 @@ public class WorkspaceService {
         this.workspaceMapper = workspaceMapper;
     }
 
-    // ── Existing methods (unchanged) ─────────────────────────
+    // ── Existing methods (all unchanged) ─────────────────────
 
     @Transactional
     public WorkspaceResponse createWorkspace(CreateWorkspaceRequest request,
@@ -74,11 +76,6 @@ public class WorkspaceService {
         return workspaceMapper.toResponse(workspace);
     }
 
-    // ── NEW: Member management methods ───────────────────────
-
-    // List all active members — admin only.
-    // Members shouldn't be able to enumerate all other members
-    // for privacy reasons. Only admins manage the roster.
     @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
     public List<MemberResponse> getWorkspaceMembers(String workspaceId,
                                                     Authentication authentication) {
@@ -89,33 +86,16 @@ public class WorkspaceService {
                 .toList();
     }
 
-    // Get the calling user's own membership details.
-    // Any active member can call this — useful for the frontend
-    // to know "am I an admin or member in this workspace?"
-    // without fetching the full member list.
     @PreAuthorize("@workspaceAuthz.isMember(#workspaceId, authentication)")
     public MemberResponse getMyMembership(String workspaceId,
                                           Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         WorkspaceMember member = memberRepository
                 .findByWorkspaceIdAndUserId(workspaceId, principal.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Membership not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
         return workspaceMapper.toMemberResponse(member);
     }
 
-    // -------------------------------------------------------
-    // Remove a member from the workspace.
-    //
-    // @PreAuthorize allows this if EITHER:
-    //   - the caller is an admin of the workspace (removing someone)
-    //   - the caller is the same person as userId (leaving)
-    //
-    // The service layer then applies additional business rules
-    // that @PreAuthorize can't express:
-    //   - Can't remove the last admin (workspace becomes orphaned)
-    //   - An admin can't remove another admin (only themselves)
-    // -------------------------------------------------------
     @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication) " +
             "|| @workspaceAuthz.isSelf(#userId, authentication)")
     @Transactional
@@ -135,25 +115,12 @@ public class WorkspaceService {
                 .map(m -> m.getRole() == WorkspaceRole.ADMIN)
                 .orElse(false);
 
-        // -------------------------------------------------------
-        // Business rule 1:
-        // An admin cannot remove another admin.
-        // To remove an admin, they must first be demoted to MEMBER.
-        // (We'll add a "change role" endpoint if needed later.)
-        // This prevents admins from sabotaging each other.
-        // -------------------------------------------------------
         if (callerIsAdmin && targetMember.getRole() == WorkspaceRole.ADMIN) {
             throw new WorkspaceAccessDeniedException(
                     "Admins cannot remove other admins. " +
                             "The target admin must leave voluntarily.");
         }
 
-        // -------------------------------------------------------
-        // Business rule 2:
-        // Can't remove the last admin.
-        // If only 1 admin exists and they try to leave, block it.
-        // The workspace would have no one to manage it.
-        // -------------------------------------------------------
         if (targetMember.getRole() == WorkspaceRole.ADMIN) {
             long adminCount = memberRepository.countByWorkspaceIdAndRoleAndStatus(
                     workspaceId, WorkspaceRole.ADMIN, MemberStatus.ACTIVE);
@@ -165,5 +132,65 @@ public class WorkspaceService {
         }
 
         memberRepository.delete(targetMember);
+    }
+
+    // ── NEW: Change member role ───────────────────────────────
+
+    // Only ADMINs can change roles — @PreAuthorize enforces this.
+    // The business rules inside handle the edge cases that
+    // @PreAuthorize can't express (last admin, no-op, etc.)
+    @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
+    @Transactional
+    public MemberResponse changeMemberRole(String workspaceId,
+                                           String userId,
+                                           ChangeRoleRequest request,
+                                           Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+        // Fetch the target member — must be active in this workspace
+        WorkspaceMember targetMember = memberRepository
+                .findByWorkspaceIdAndUserId(workspaceId, userId)
+                .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Active member not found in this workspace"));
+
+        // -------------------------------------------------------
+        // Edge case 1: No-op check
+        // If the target member already has the requested role,
+        // return 400 instead of silently doing nothing.
+        // Silent no-ops confuse API clients — they don't know
+        // if the operation succeeded or was ignored.
+        // -------------------------------------------------------
+        if (targetMember.getRole() == request.getRole()) {
+            throw new DuplicateResourceException(
+                    "Member already has the role: " + request.getRole());
+        }
+
+        // -------------------------------------------------------
+        // Edge case 2: Last admin demotion protection
+        // An admin demoting themselves OR another admin to MEMBER
+        // must not leave the workspace with zero admins.
+        //
+        // We check this only when the requested role is MEMBER
+        // (i.e., a demotion is being requested).
+        // -------------------------------------------------------
+        if (request.getRole() == WorkspaceRole.MEMBER
+                && targetMember.getRole() == WorkspaceRole.ADMIN) {
+
+            long adminCount = memberRepository.countByWorkspaceIdAndRoleAndStatus(
+                    workspaceId, WorkspaceRole.ADMIN, MemberStatus.ACTIVE);
+
+            if (adminCount <= 1) {
+                throw new WorkspaceAccessDeniedException(
+                        "Cannot demote the last admin of a workspace. " +
+                                "Promote another member to admin first.");
+            }
+        }
+
+        // All checks passed — apply the role change
+        targetMember.setRole(request.getRole());
+        WorkspaceMember saved = memberRepository.save(targetMember);
+
+        return workspaceMapper.toMemberResponse(saved);
     }
 }

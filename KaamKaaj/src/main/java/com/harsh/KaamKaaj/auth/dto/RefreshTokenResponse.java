@@ -5,14 +5,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+// Returned after a successful token refresh.
+// Contains a NEW access token and a NEW refresh token.
+// The client must replace both stored values.
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponse {
+public class RefreshTokenResponse {
     private String accessToken;
-    private String refreshToken;  // NEW — added for refresh token flow
-    private String tokenType;
+    private String refreshToken;
+    private String tokenType = "Bearer";
     private long expiresIn;
-    private String email;
 }

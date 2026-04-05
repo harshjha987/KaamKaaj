@@ -1,5 +1,6 @@
 package com.harsh.KaamKaaj.workspace;
 
+import com.harsh.KaamKaaj.workspace.dto.ChangeRoleRequest;
 import com.harsh.KaamKaaj.workspace.dto.CreateWorkspaceRequest;
 import com.harsh.KaamKaaj.workspace.dto.MemberResponse;
 import com.harsh.KaamKaaj.workspace.dto.WorkspaceResponse;
@@ -24,9 +25,11 @@ public class WorkspaceController {
         this.workspaceService = workspaceService;
     }
 
+    // ── Existing endpoints (all unchanged) ───────────────────
+
     @Operation(summary = "Create a workspace",
             description = "Any authenticated user can create a workspace. " +
-                    "The creator automatically becomes the workspace ADMIN.")
+                    "Creator automatically becomes ADMIN.")
     @PostMapping
     public ResponseEntity<WorkspaceResponse> createWorkspace(
             @Valid @RequestBody CreateWorkspaceRequest request,
@@ -35,8 +38,7 @@ public class WorkspaceController {
                 .body(workspaceService.createWorkspace(request, authentication));
     }
 
-    @Operation(summary = "List my workspaces",
-            description = "Returns all workspaces the authenticated user is an active member of.")
+    @Operation(summary = "List my workspaces")
     @GetMapping
     public ResponseEntity<List<WorkspaceResponse>> getMyWorkspaces(
             Authentication authentication) {
@@ -44,7 +46,7 @@ public class WorkspaceController {
     }
 
     @Operation(summary = "Get workspace by ID",
-            description = "Returns workspace details. Caller must be an active member.")
+            description = "Caller must be an active member.")
     @GetMapping("/{workspaceId}")
     public ResponseEntity<WorkspaceResponse> getWorkspace(
             @PathVariable String workspaceId,
@@ -53,8 +55,7 @@ public class WorkspaceController {
                 workspaceService.getWorkspaceById(workspaceId, authentication));
     }
 
-    @Operation(summary = "List workspace members",
-            description = "Returns all active members. ADMIN only.")
+    @Operation(summary = "List workspace members", description = "ADMIN only.")
     @GetMapping("/{workspaceId}/members")
     public ResponseEntity<List<MemberResponse>> getMembers(
             @PathVariable String workspaceId,
@@ -64,8 +65,7 @@ public class WorkspaceController {
     }
 
     @Operation(summary = "Get my membership",
-            description = "Returns the calling user's own membership details " +
-                    "including their role in this workspace.")
+            description = "Returns your own role and status in this workspace.")
     @GetMapping("/{workspaceId}/members/me")
     public ResponseEntity<MemberResponse> getMyMembership(
             @PathVariable String workspaceId,
@@ -76,7 +76,7 @@ public class WorkspaceController {
 
     @Operation(summary = "Remove a member",
             description = "ADMIN can remove any non-admin member. " +
-                    "Any member can remove themselves (leave workspace). " +
+                    "Any member can remove themselves (leave). " +
                     "Last admin cannot leave.")
     @DeleteMapping("/{workspaceId}/members/{userId}")
     public ResponseEntity<Void> removeMember(
@@ -85,5 +85,30 @@ public class WorkspaceController {
             Authentication authentication) {
         workspaceService.removeMember(workspaceId, userId, authentication);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── NEW endpoint ──────────────────────────────────────────
+
+    @Operation(
+            summary = "Change member role",
+            description = """
+            ADMIN only. Promote a MEMBER to ADMIN or demote an ADMIN to MEMBER.
+            
+            Rules:
+            - Cannot change a role to what it already is (400)
+            - Cannot demote the last admin of a workspace (403)
+            - Only ADMINs can call this endpoint (403 for members)
+            
+            Body: { "role": "ADMIN" } or { "role": "MEMBER" }
+            """
+    )
+    @PatchMapping("/{workspaceId}/members/{userId}/role")
+    public ResponseEntity<MemberResponse> changeMemberRole(
+            @PathVariable String workspaceId,
+            @PathVariable String userId,
+            @Valid @RequestBody ChangeRoleRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(
+                workspaceService.changeMemberRole(workspaceId, userId, request, authentication));
     }
 }
