@@ -4,14 +4,15 @@ import Modal from '../ui/Modal'
 import { ModalFooter } from '../ui/Modal'
 import { Input, Textarea } from '../ui/Input'
 import Button from '../ui/Button'
-import { workspaceService } from '../../services/endpoints'
+import { workspaceService, invitationService, assignmentService } from '../../services/endpoints'
 import useToastStore from '../../store/toastStore'
 import { extractApiError } from '../../utils/helpers'
 
 export default function AppShell({ children }) {
-  const [workspaces, setWorkspaces] = useState([])
+  const [workspaces, setWorkspaces]   = useState([])
+  const [inboxCount, setInboxCount]   = useState(0)
   const [showCreateWs, setShowCreateWs] = useState(false)
-  const [form, setForm] = useState({ name: '', description: '' })
+  const [form, setForm]   = useState({ name: '', description: '' })
   const [loading, setLoading] = useState(false)
   const { addToast } = useToastStore()
 
@@ -22,7 +23,24 @@ export default function AppShell({ children }) {
     } catch (_) {}
   }
 
-  useEffect(() => { fetchWorkspaces() }, [])
+  // Fetch real inbox count — sum of pending invitations + pending assignments
+  const fetchInboxCount = async () => {
+    try {
+      const [inv, asgn] = await Promise.all([
+        invitationService.myPending().catch(() => ({ data: [] })),
+        assignmentService.myPending().catch(() => ({ data: [] })),
+      ])
+      setInboxCount((inv.data?.length || 0) + (asgn.data?.length || 0))
+    } catch (_) {}
+  }
+
+  useEffect(() => {
+    fetchWorkspaces()
+    fetchInboxCount()
+    // Refresh inbox count every 60 seconds
+    const interval = setInterval(fetchInboxCount, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleCreate = async () => {
     if (!form.name.trim()) { addToast('Workspace name is required', 'error'); return }
@@ -40,10 +58,17 @@ export default function AppShell({ children }) {
 
   return (
     <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)', paddingTop: 64 }}>
-      <Sidebar workspaces={workspaces} onNewWorkspace={() => setShowCreateWs(true)} />
+      <Sidebar
+        workspaces={workspaces}
+        inboxCount={inboxCount}
+        onNewWorkspace={() => setShowCreateWs(true)}
+        onInboxRefresh={fetchInboxCount}
+      />
       <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
-        {/* Pass fetchWorkspaces down so child pages can refresh the sidebar */}
-        {React.cloneElement(children, { refreshWorkspaces: fetchWorkspaces })}
+        {React.cloneElement(children, {
+          refreshWorkspaces: fetchWorkspaces,
+          refreshInbox: fetchInboxCount,
+        })}
       </main>
 
       <Modal

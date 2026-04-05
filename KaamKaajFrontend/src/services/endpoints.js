@@ -1,165 +1,55 @@
 import api from './api'
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
-
 export const authService = {
-  // POST /api/v1/auth/register
-  register: (data) =>
-    api.post('/auth/register', {
-      userName: data.username,
-      email: data.email,
-      password: data.password,
-    }),
-
-  // POST /api/v1/auth/login
-  login: (data) =>
-    api.post('/auth/login', {
-      email: data.email,
-      password: data.password,
-    }),
-
-  // POST /api/v1/auth/refresh
-  refresh: (refreshToken) =>
-    api.post('/auth/refresh', { refreshToken }),
-
-  // GET /api/v1/auth/me
-  me: () => api.get('/auth/me'),
-
-  // POST /api/v1/auth/logout
-  logout: () => api.post('/auth/logout'),
+  register: (data) => api.post('/auth/register', { userName: data.username, email: data.email, password: data.password }),
+  login:    (data) => api.post('/auth/login', { email: data.email, password: data.password }),
+  refresh:  (refreshToken) => api.post('/auth/refresh', { refreshToken }),
+  me:       () => api.get('/auth/me'),
+  logout:   () => api.post('/auth/logout'),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword:  (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
 }
-
-// ── USERS ─────────────────────────────────────────────────────────────────────
 
 export const userService = {
-  // GET /api/v1/users/search?q=query
-  search: (query) =>
-    api.get('/users/search', { params: { q: query } }),
+  search: (query) => api.get('/users/search', { params: { q: query } }),
 }
-
-// ── WORKSPACES ────────────────────────────────────────────────────────────────
 
 export const workspaceService = {
-  // POST /api/v1/workspaces
-  create: (data) =>
-    api.post('/workspaces', {
-      name: data.name,
-      description: data.description,
-    }),
-
-  // GET /api/v1/workspaces
-  list: () => api.get('/workspaces'),
-
-  // GET /api/v1/workspaces/:id
-  get: (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}`),
-
-  // ── Members ──
-
-  // GET /api/v1/workspaces/:id/members
-  getMembers: (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}/members`),
-
-  // GET /api/v1/workspaces/:id/members/me
-  getMyMembership: (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}/members/me`),
-
-  // DELETE /api/v1/workspaces/:id/members/:userId
-  removeMember: (workspaceId, userId) =>
-    api.delete(`/workspaces/${workspaceId}/members/${userId}`),
-
-  // PATCH /api/v1/workspaces/:id/members/:userId/role
-  changeMemberRole: (workspaceId, userId, role) =>
-    api.patch(`/workspaces/${workspaceId}/members/${userId}/role`, { role }),
+  create:         (data) => api.post('/workspaces', { name: data.name, description: data.description }),
+  list:           () => api.get('/workspaces'),
+  get:            (workspaceId) => api.get(`/workspaces/${workspaceId}`),
+  getMembers:     (workspaceId) => api.get(`/workspaces/${workspaceId}/members`),
+  getMyMembership:(workspaceId) => api.get(`/workspaces/${workspaceId}/members/me`),
+  removeMember:   (workspaceId, userId) => api.delete(`/workspaces/${workspaceId}/members/${userId}`),
+  changeMemberRole:(workspaceId, userId, role) => api.patch(`/workspaces/${workspaceId}/members/${userId}/role`, { role }),
 }
-
-// ── INVITATIONS ───────────────────────────────────────────────────────────────
 
 export const invitationService = {
-  // POST /api/v1/workspaces/:id/invitations
-  send: (workspaceId, invitedUserId) =>
-    api.post(`/workspaces/${workspaceId}/invitations`, { invitedUserId }),
-
-  // GET /api/v1/workspaces/:id/invitations
-  list: (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}/invitations`),
-
-  // DELETE /api/v1/workspaces/:id/invitations/:invId
-  cancel: (workspaceId, invitationId) =>
-    api.delete(`/workspaces/${workspaceId}/invitations/${invitationId}`),
-
-  // GET /api/v1/me/invitations
+  send:      (workspaceId, invitedUserId) => api.post(`/workspaces/${workspaceId}/invitations`, { invitedUserId }),
+  list:      (workspaceId) => api.get(`/workspaces/${workspaceId}/invitations`),
+  cancel:    (workspaceId, invitationId) => api.delete(`/workspaces/${workspaceId}/invitations/${invitationId}`),
   myPending: () => api.get('/me/invitations'),
-
-  // POST /api/v1/me/invitations/:id/accept
-  accept: (invitationId) =>
-    api.post(`/me/invitations/${invitationId}/accept`),
-
-  // POST /api/v1/me/invitations/:id/decline
-  decline: (invitationId) =>
-    api.post(`/me/invitations/${invitationId}/decline`),
+  accept:    (invitationId) => api.post(`/me/invitations/${invitationId}/accept`),
+  decline:   (invitationId) => api.post(`/me/invitations/${invitationId}/decline`),
 }
-
-// ── TASKS ─────────────────────────────────────────────────────────────────────
 
 export const taskService = {
-  // POST /api/v1/workspaces/:id/tasks
-  create: (workspaceId, data) =>
-    api.post(`/workspaces/${workspaceId}/tasks`, {
-      title: data.title,
-      description: data.description,
-      priority: data.priority,
-      dueDate: data.dueDate,
-    }),
-
-  // GET /api/v1/workspaces/:id/tasks
-  list: (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}/tasks`),
-
-  // GET /api/v1/workspaces/:id/tasks/:taskId
-  get: (workspaceId, taskId) =>
-    api.get(`/workspaces/${workspaceId}/tasks/${taskId}`),
-
-  // PUT /api/v1/workspaces/:id/tasks/:taskId
-  update: (workspaceId, taskId, data) =>
-    api.put(`/workspaces/${workspaceId}/tasks/${taskId}`, data),
-
-  // DELETE /api/v1/workspaces/:id/tasks/:taskId
-  delete: (workspaceId, taskId) =>
-    api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`),
-
-  // PATCH /api/v1/workspaces/:id/tasks/:taskId/status
-  updateStatus: (workspaceId, taskId, status) =>
-    api.patch(`/workspaces/${workspaceId}/tasks/${taskId}/status`, { status }),
-
-  // GET /api/v1/workspaces/:id/me/tasks
-  myTasks: (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}/me/tasks`),
+  create:       (workspaceId, data) => api.post(`/workspaces/${workspaceId}/tasks`, { title: data.title, description: data.description, priority: data.priority, dueDate: data.dueDate }),
+  list:         (workspaceId) => api.get(`/workspaces/${workspaceId}/tasks`),
+  get:          (workspaceId, taskId) => api.get(`/workspaces/${workspaceId}/tasks/${taskId}`),
+  update:       (workspaceId, taskId, data) => api.put(`/workspaces/${workspaceId}/tasks/${taskId}`, data),
+  delete:       (workspaceId, taskId) => api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`),
+  // MEMBER: get only their accepted tasks in a workspace
+  myTasks:      (workspaceId) => api.get(`/workspaces/${workspaceId}/me/tasks`),
+  // MEMBER: update task status (NOT_STARTED → IN_PROGRESS → COMPLETED)
+  updateStatus: (workspaceId, taskId, status) => api.patch(`/workspaces/${workspaceId}/tasks/${taskId}/status`, { status }),
 }
 
-// ── ASSIGNMENTS ───────────────────────────────────────────────────────────────
-
 export const assignmentService = {
-  // POST /api/v1/workspaces/:id/tasks/:taskId/assignments
-  create: (workspaceId, taskId, assigneeId) =>
-    api.post(`/workspaces/${workspaceId}/tasks/${taskId}/assignments`, { assigneeId }),
-
-  // GET /api/v1/workspaces/:id/tasks/:taskId/assignments
-  history: (workspaceId, taskId) =>
-    api.get(`/workspaces/${workspaceId}/tasks/${taskId}/assignments`),
-
-  // DELETE /api/v1/workspaces/:id/tasks/:taskId/assignments/:assignmentId
-  cancel: (workspaceId, taskId, assignmentId) =>
-    api.delete(`/workspaces/${workspaceId}/tasks/${taskId}/assignments/${assignmentId}`),
-
-  // GET /api/v1/me/assignments
+  create:    (workspaceId, taskId, assigneeId) => api.post(`/workspaces/${workspaceId}/tasks/${taskId}/assignments`, { assigneeId }),
+  history:   (workspaceId, taskId) => api.get(`/workspaces/${workspaceId}/tasks/${taskId}/assignments`),
+  cancel:    (workspaceId, taskId, assignmentId) => api.delete(`/workspaces/${workspaceId}/tasks/${taskId}/assignments/${assignmentId}`),
   myPending: () => api.get('/me/assignments'),
-
-  // POST /api/v1/me/assignments/:id/accept
-  accept: (assignmentId) =>
-    api.post(`/me/assignments/${assignmentId}/accept`),
-
-  // POST /api/v1/me/assignments/:id/decline
-  decline: (assignmentId) =>
-    api.post(`/me/assignments/${assignmentId}/decline`),
+  accept:    (assignmentId) => api.post(`/me/assignments/${assignmentId}/accept`),
+  decline:   (assignmentId) => api.post(`/me/assignments/${assignmentId}/decline`),
 }

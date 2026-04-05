@@ -27,10 +27,7 @@ import java.time.Instant;
         // we'll enforce the "only one pending" rule in the service
         // layer since the DB constraint covers all statuses.
         // We'll handle re-invite logic in InvitationService.
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_workspace_invited_user",
-                columnNames = {"workspace_id", "invited_user_id"}
-        )
+        
 )
 public class WorkspaceInvitation {
 

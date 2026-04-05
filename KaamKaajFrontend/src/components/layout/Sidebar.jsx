@@ -5,16 +5,16 @@ import { motion } from 'framer-motion'
 import useAuthStore from '../../store/authStore'
 import Avatar from '../ui/Avatar'
 
-const NAV = [
-  { icon: LayoutDashboard, label: 'Overview',  path: '/dashboard' },
-  { icon: Mail,            label: 'Inbox',     path: '/inbox',    badge: 3 },
-  { icon: CheckSquare,     label: 'My Tasks',  path: '/my-tasks' },
-]
+export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspace }) {
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const { user }  = useAuthStore()
 
-export default function Sidebar({ workspaces = [], onNewWorkspace }) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { user } = useAuthStore()
+  const NAV = [
+    { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
+    { icon: Mail,            label: 'Inbox',    path: '/dashboard', badge: inboxCount },
+    { icon: CheckSquare,     label: 'My Tasks', path: '/dashboard' },
+  ]
 
   return (
     <aside style={{
@@ -47,7 +47,7 @@ export default function Sidebar({ workspaces = [], onNewWorkspace }) {
           const active = location.pathname === path
           return (
             <motion.button
-              key={path} whileTap={{ scale: 0.98 }}
+              key={label} whileTap={{ scale: 0.98 }}
               onClick={() => navigate(path)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.6rem',
@@ -65,7 +65,8 @@ export default function Sidebar({ workspaces = [], onNewWorkspace }) {
             >
               <Icon size={15} style={{ opacity: active ? 1 : 0.65, flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{label}</span>
-              {badge && (
+              {/* Only show badge when count > 0 */}
+              {badge > 0 && (
                 <span style={{
                   background: 'var(--violet)', color: '#fff',
                   fontSize: '0.62rem', fontWeight: 600,
@@ -122,8 +123,7 @@ export default function Sidebar({ workspaces = [], onNewWorkspace }) {
             borderRadius: 'var(--radius-sm)', cursor: 'pointer',
             border: 'none', textAlign: 'left',
             fontFamily: 'var(--font-body)', fontSize: '0.875rem',
-            color: 'var(--text3)', background: 'none',
-            transition: 'var(--transition)',
+            color: 'var(--text3)', background: 'none', transition: 'var(--transition)',
           }}
           onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--violet)'; e.currentTarget.style.background = 'var(--violet-alpha)' }}
           onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text3)'; e.currentTarget.style.background = 'none' }}
@@ -167,9 +167,6 @@ const WS_COLORS = [
 function WsColorDot({ name = '' }) {
   const idx = name.charCodeAt(0) % WS_COLORS.length
   return (
-    <div style={{
-      width: 14, height: 14, borderRadius: 4,
-      background: WS_COLORS[idx], flexShrink: 0,
-    }} />
+    <div style={{ width: 14, height: 14, borderRadius: 4, background: WS_COLORS[idx], flexShrink: 0 }} />
   )
 }

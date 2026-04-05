@@ -77,11 +77,17 @@ public class InvitationService {
 
         // Guard 3: Can't send a duplicate pending invitation
         // If one already exists with PENDING status, reject it.
+        // In sendInvitation() — replace this block:
+
+// Guard 3: Can't send a duplicate pending invitation
+// Only block if there's already a PENDING invitation.
+// DECLINED or CANCELLED invitations allow re-inviting.
         invitationRepository.findByWorkspaceIdAndInvitedUserIdAndStatus(
                         workspaceId, invitedUser.getId(), InvitationStatus.PENDING)
                 .ifPresent(existing -> {
                     throw new DuplicateResourceException(
-                            "A pending invitation already exists for this user");
+                            "A pending invitation already exists for this user. " +
+                                    "Cancel it first before sending a new one.");
                 });
 
         WorkspaceInvitation invitation = new WorkspaceInvitation();
