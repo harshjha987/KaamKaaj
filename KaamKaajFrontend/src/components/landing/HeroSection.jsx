@@ -41,9 +41,9 @@ export default function HeroSection() {
       {/* Headline */}
       <motion.h1 {...fadeUp(0.1)} style={{
         fontFamily: 'var(--font-display)',
-        fontSize: 'clamp(3rem, 8vw, 6rem)',
-        fontWeight: 800, lineHeight: 1.02,
-        letterSpacing: '-0.03em', marginBottom: '1.5rem',
+        fontSize: 'clamp(2.2rem, 5vw, 3.8rem)',
+        fontWeight: 700, lineHeight: 1.08,
+        letterSpacing: '-0.02em', marginBottom: '1.5rem',
       }}>
         <span style={{ display: 'block', color: 'var(--text)' }}>Work that moves.</span>
         <span style={{

@@ -86,9 +86,9 @@ export function StatsSection() {
     <section id="about" style={{ padding: '4rem 2rem', background: 'var(--bg3)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
       <div ref={ref} className="reveal" style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', textAlign: 'center' }}>
         {[
-          { num: '15min', label: 'Access token lifetime' },
+          { num: '10x',   label: 'Faster task delivery' },
           { num: '∞',     label: 'Workspaces you can create' },
-          { num: '0ms',   label: 'Auth latency overhead' },
+          { num: '100%',  label: 'Workspace data isolation' },
         ].map((s) => (
           <div key={s.label}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'var(--grad2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>

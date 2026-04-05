@@ -1,0 +1,10 @@
+
+
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+
+spring.mail.username=YOUR_GMAIL@gmail.com
+spring.mail.password=YOUR_GMAIL_APP_PASSWORD
+
+app.jwt.secret=GENERATE_WITH: openssl rand -base64 32
+app.frontend-url=http://localhost:3000
