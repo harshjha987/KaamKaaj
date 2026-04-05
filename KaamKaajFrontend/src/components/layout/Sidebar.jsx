@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import useAuthStore from '../../store/authStore'
 import Avatar from '../ui/Avatar'
 
-export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspace }) {
+export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspace, onSettings }) {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user }  = useAuthStore()
@@ -65,7 +65,6 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
             >
               <Icon size={15} style={{ opacity: active ? 1 : 0.65, flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{label}</span>
-              {/* Only show badge when count > 0 */}
               {badge > 0 && (
                 <span style={{
                   background: 'var(--violet)', color: '#fff',
@@ -133,10 +132,11 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
         </motion.button>
       </div>
 
-      {/* SETTINGS */}
+      {/* SETTINGS — now wired up */}
       <div style={{ padding: '0 0.75rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', marginTop: '1rem' }}>
         <motion.button
           whileTap={{ scale: 0.98 }}
+          onClick={onSettings}
           style={{
             display: 'flex', alignItems: 'center', gap: '0.6rem',
             width: '100%', padding: '0.55rem 0.75rem',

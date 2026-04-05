@@ -12,7 +12,7 @@ public interface UserRepo extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
-
+    Optional<User> findByUsername(String username);
     // Global user search by name or email.
     //
     // LOWER() makes the search case-insensitive — "harsh"

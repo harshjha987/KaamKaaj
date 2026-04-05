@@ -182,7 +182,7 @@ export function Footer() {
           <div style={{ fontSize: '0.8rem', color: 'var(--text3)', marginTop: '0.2rem' }}>Work that matters.</div>
         </div>
         <div style={{ fontSize: '0.8rem', color: 'var(--text3)' }}>
-          © 2026 KaamKaaj · Built with Spring Boot + React
+          © 2026 KaamKaaj · Built with love by Harsh.
         </div>
       </div>
     </footer>

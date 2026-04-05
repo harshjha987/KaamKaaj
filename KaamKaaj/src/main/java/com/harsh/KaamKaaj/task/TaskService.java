@@ -71,6 +71,7 @@ public class TaskService {
         return taskMapper.toResponse(taskRepository.save(task));
     }
 
+    @Transactional(readOnly = true)
     @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
     public List<TaskResponse> getWorkspaceTasks(String workspaceId,
                                                 Authentication authentication) {

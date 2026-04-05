@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { PriorityBadge } from '../ui/Badge'
 import { formatDate, getInitials, getAvatarColor } from '../../utils/helpers'
+import { UserCheck } from 'lucide-react'
 
 const COLUMNS = [
   { key: 'NOT_STARTED', label: 'Not Started', accent: 'var(--text3)'  },
@@ -9,7 +10,6 @@ const COLUMNS = [
   { key: 'COMPLETED',   label: 'Completed',   accent: '#16A34A'       },
 ]
 
-// Valid transitions for MEMBER status updates
 const NEXT_STATUS = {
   NOT_STARTED: 'IN_PROGRESS',
   IN_PROGRESS: 'COMPLETED',
@@ -70,6 +70,7 @@ export default function TaskBoard({ tasks = [], myRole, members = [], onAssign, 
 function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
   const nextStatus = NEXT_STATUS[task.status]
   const nextLabel  = NEXT_LABEL[task.status]
+  const isAssigned = !!task.assignedToUsername
 
   return (
     <motion.div
@@ -78,33 +79,40 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
         background: 'var(--bg3)', borderRadius: 'var(--radius-sm)',
         padding: '0.85rem', marginBottom: '0.5rem',
         border: `1px solid ${done ? 'rgba(22,163,74,0.15)' : 'var(--border)'}`,
-        opacity: done ? 0.75 : 1, transition: 'var(--transition)',
-        cursor: 'default',
+        opacity: done ? 0.75 : 1,
+        transition: 'var(--transition)',
       }}
     >
-      <div style={{ fontSize: '0.85rem', fontWeight: 500, color: done ? 'var(--text2)' : 'var(--text)', marginBottom: '0.5rem', lineHeight: 1.4, textDecoration: done ? 'line-through' : 'none' }}>
+      {/* Title */}
+      <div style={{
+        fontSize: '0.85rem', fontWeight: 500, lineHeight: 1.4,
+        marginBottom: '0.5rem',
+        textDecoration: done ? 'line-through' : 'none',
+        color: done ? 'var(--text2)' : 'var(--text)',
+      }}>
         {task.title}
       </div>
 
+      {/* Description preview */}
       {task.description && (
         <div style={{ fontSize: '0.75rem', color: 'var(--text3)', marginBottom: '0.5rem', lineHeight: 1.4 }}>
           {task.description.length > 80 ? task.description.slice(0, 80) + '...' : task.description}
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: myRole === 'ADMIN' || (myRole === 'MEMBER' && nextLabel) ? '0.6rem' : 0 }}>
+      {/* Priority + due date + created-by avatar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
         <PriorityBadge priority={task.priority} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           {task.dueDate && (
             <span style={{ fontSize: '0.68rem', color: 'var(--text3)' }}>{formatDate(task.dueDate)}</span>
           )}
           {task.createdByUsername && (
-            <div style={{
+            <div title={`Created by ${task.createdByUsername}`} style={{
               width: 20, height: 20, borderRadius: '50%',
               background: getAvatarColor(task.createdByUsername),
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.55rem', fontWeight: 600, color: '#fff',
-              title: task.createdByUsername,
             }}>
               {getInitials(task.createdByUsername)}
             </div>
@@ -112,34 +120,60 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
         </div>
       </div>
 
-      {/* ADMIN — assign button */}
+      {/* ── ADMIN view ── */}
       {myRole === 'ADMIN' && !done && (
-        <button
-          onClick={() => onAssign?.(task)}
-          style={{
-            width: '100%', fontSize: '0.72rem', fontWeight: 500,
-            padding: '0.3rem', borderRadius: 'var(--radius-sm)',
-            cursor: 'pointer', fontFamily: 'var(--font-body)',
-            background: 'var(--violet-alpha)', color: 'var(--violet)',
-            border: '1px solid rgba(124,58,237,0.2)', transition: 'var(--transition)',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.18)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--violet-alpha)'}
-        >
-          Assign to member
-        </button>
+        isAssigned ? (
+          // Task already has an assignee — show who it's assigned to
+          // Clicking it opens the assign modal so admin can re-assign
+          <button
+            onClick={() => onAssign?.(task)}
+            title="Click to re-assign"
+            style={{
+              width: '100%', fontSize: '0.72rem', fontWeight: 500,
+              padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
+              cursor: 'pointer', fontFamily: 'var(--font-body)',
+              background: 'rgba(22,163,74,0.08)', color: '#16A34A',
+              border: '1px solid rgba(22,163,74,0.2)',
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              transition: 'var(--transition)',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.15)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.08)'}
+          >
+            <UserCheck size={12} />
+            <span>Assigned to <strong>{task.assignedToUsername}</strong></span>
+          </button>
+        ) : (
+          // No assignee yet — show assign button
+          <button
+            onClick={() => onAssign?.(task)}
+            style={{
+              width: '100%', fontSize: '0.72rem', fontWeight: 500,
+              padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
+              cursor: 'pointer', fontFamily: 'var(--font-body)',
+              background: 'var(--violet-alpha)', color: 'var(--violet)',
+              border: '1px solid rgba(124,58,237,0.2)',
+              transition: 'var(--transition)',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.18)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'var(--violet-alpha)'}
+          >
+            + Assign to member
+          </button>
+        )
       )}
 
-      {/* MEMBER — status update button */}
+      {/* ── MEMBER view — status update button ── */}
       {myRole === 'MEMBER' && nextLabel && (
         <button
           onClick={() => onStatusUpdate?.(task, nextStatus)}
           style={{
             width: '100%', fontSize: '0.72rem', fontWeight: 500,
-            padding: '0.3rem', borderRadius: 'var(--radius-sm)',
+            padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
             cursor: 'pointer', fontFamily: 'var(--font-body)',
             background: 'rgba(22,163,74,0.1)', color: '#16A34A',
-            border: '1px solid rgba(22,163,74,0.2)', transition: 'var(--transition)',
+            border: '1px solid rgba(22,163,74,0.2)',
+            transition: 'var(--transition)',
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}
