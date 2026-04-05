@@ -2,7 +2,9 @@ package com.harsh.KaamKaaj.workspace.mapper;
 
 import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.workspace.Workspace;
+import com.harsh.KaamKaaj.workspace.WorkspaceMember;
 import com.harsh.KaamKaaj.workspace.dto.CreateWorkspaceRequest;
+import com.harsh.KaamKaaj.workspace.dto.MemberResponse;
 import com.harsh.KaamKaaj.workspace.dto.WorkspaceResponse;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +18,6 @@ public class WorkspaceMapper {
                 request.getDescription() != null ? request.getDescription().trim() : null
         );
         workspace.setCreatedBy(creator);
-        // createdAt is set automatically by @CreationTimestamp
         return workspace;
     }
 
@@ -25,13 +26,21 @@ public class WorkspaceMapper {
                 workspace.getId(),
                 workspace.getName(),
                 workspace.getDescription(),
-                // workspace.getCreatedBy() is LAZY — this triggers
-                // one DB fetch. This is fine inside a @Transactional
-                // service call. If called outside a transaction,
-                // Hibernate throws LazyInitializationException.
-                // We'll solve this cleanly with projections later.
                 workspace.getCreatedBy().getUsername(),
                 workspace.getCreatedAt()
+        );
+    }
+
+    // NEW: Map WorkspaceMember entity → MemberResponse DTO
+    public MemberResponse toMemberResponse(WorkspaceMember member) {
+        return new MemberResponse(
+                member.getId(),
+                member.getUser().getId(),
+                member.getUser().getUsername(),
+                member.getUser().getEmail(),
+                member.getRole(),
+                member.getStatus(),
+                member.getJoinedAt()
         );
     }
 }
