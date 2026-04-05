@@ -1,7 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Play } from 'lucide-react'
+import { ArrowRight, ChevronDown } from 'lucide-react'
+import useAuthStore from '../../store/authStore'
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -11,12 +12,13 @@ const fadeUp = (delay = 0) => ({
 
 export default function HeroSection() {
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuthStore()
 
   return (
     <section style={{
       minHeight: '100vh', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      padding: '7rem 2rem 4rem', textAlign: 'center',
+      padding: '7rem 1.5rem 4rem', textAlign: 'center',
       position: 'relative', overflow: 'hidden',
     }}>
       {/* Orbs */}
@@ -55,20 +57,24 @@ export default function HeroSection() {
       </motion.h1>
 
       <motion.p {...fadeUp(0.2)} style={{
-        fontSize: '1.15rem', fontWeight: 300, color: 'var(--text2)',
-        maxWidth: 520, lineHeight: 1.65, marginBottom: '2.5rem',
+        fontSize: '1.1rem', fontWeight: 300, color: 'var(--text2)',
+        maxWidth: 500, lineHeight: 1.65, marginBottom: '2.5rem',
+        padding: '0 1rem',
       }}>
         KaamKaaj brings your team's work into focus. Assign, track, and complete tasks
         with a platform that's as sharp as you are.
       </motion.p>
 
       {/* CTA Buttons */}
-      <motion.div {...fadeUp(0.3)} style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '4rem' }}>
-        <HeroBtn primary onClick={() => navigate('/auth')}>
-          Start for free <ArrowRight size={16} />
+      <motion.div {...fadeUp(0.3)} style={{
+        display: 'flex', gap: '1rem', justifyContent: 'center',
+        flexWrap: 'wrap', marginBottom: '4rem', padding: '0 1rem',
+      }}>
+        <HeroBtn primary onClick={() => navigate(isAuthenticated ? '/dashboard' : '/auth')}>
+          {isAuthenticated ? 'Go to Dashboard' : 'Start for free'} <ArrowRight size={16} />
         </HeroBtn>
-        <HeroBtn onClick={() => navigate('/auth')}>
-          <Play size={14} /> Watch demo
+        <HeroBtn onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
+          <ChevronDown size={16} /> See features
         </HeroBtn>
       </motion.div>
 
@@ -77,8 +83,7 @@ export default function HeroSection() {
         {...fadeUp(0.4)}
         style={{
           width: '100%', maxWidth: 900,
-          borderRadius: 'var(--radius-xl)',
-          overflow: 'hidden',
+          borderRadius: 'var(--radius-xl)', overflow: 'hidden',
           border: '1px solid var(--border2)',
           boxShadow: 'var(--shadow-lg), 0 0 0 1px rgba(124,58,237,0.08)',
           background: 'var(--bg3)', position: 'relative', zIndex: 1,
@@ -94,8 +99,13 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Mockup body */}
-        <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1rem', minHeight: 300 }}>
+        {/* Mockup body — responsive grid */}
+        <div style={{
+          padding: '1.5rem',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(140px, 200px) 1fr',
+          gap: '1rem', minHeight: 280,
+        }}>
           {/* Sidebar preview */}
           <div style={{ background: 'var(--bg2)', borderRadius: 'var(--radius)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             <div style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text3)', marginBottom: '0.4rem' }}>Workspaces</div>
@@ -114,9 +124,9 @@ export default function HeroSection() {
           </div>
 
           {/* Task board preview */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 700 }}>Sprint Tasks</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text)' }}>Sprint Tasks</span>
               <div style={{ display: 'flex', gap: '0.4rem' }}>
                 <Chip color="var(--violet)">5 Active</Chip>
                 <Chip color="var(--cyan-dark)">2 In Review</Chip>
@@ -141,7 +151,9 @@ export default function HeroSection() {
                 }}>
                   {t.done && <span style={{ fontSize: 7, color: '#fff', fontWeight: 700 }}>✓</span>}
                 </div>
-                <span style={{ fontSize: '0.7rem', color: t.done ? 'var(--text3)' : 'var(--text)', textDecoration: t.done ? 'line-through' : 'none', flex: 1 }}>{t.title}</span>
+                <span style={{ fontSize: '0.7rem', color: t.done ? 'var(--text3)' : 'var(--text)', textDecoration: t.done ? 'line-through' : 'none', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {t.title}
+                </span>
                 <Chip color={t.done ? '#16A34A' : t.active ? 'var(--violet)' : 'var(--text3)'}>
                   {t.done ? 'Done' : t.active ? 'Active' : 'Queue'}
                 </Chip>
@@ -178,20 +190,24 @@ function Orb({ style }) {
 }
 
 function HeroBtn({ children, primary, onClick }) {
+  const [hovered, setHovered] = React.useState(false)
   return (
-    <button onClick={onClick} style={{
-      display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-      fontSize: '1rem', fontWeight: 500,
-      padding: '0.8rem 2rem', borderRadius: 'var(--radius)',
-      cursor: 'pointer', transition: 'var(--transition)',
-      fontFamily: 'var(--font-body)',
-      ...(primary
-        ? { background: 'var(--grad2)', color: '#fff', border: 'none', boxShadow: '0 4px 20px rgba(124,58,237,0.35)' }
-        : { background: 'var(--bg-glass)', color: 'var(--text)', border: '1px solid var(--border2)', backdropFilter: 'blur(10px)' }
-      ),
-    }}
-    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }}
-    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+        fontSize: '1rem', fontWeight: 500,
+        padding: '0.8rem 2rem', borderRadius: 'var(--radius)',
+        cursor: 'pointer', transition: 'var(--transition)',
+        fontFamily: 'var(--font-body)',
+        ...(primary
+          ? { background: 'var(--grad2)', color: '#fff', border: 'none', boxShadow: hovered ? '0 8px 30px rgba(124,58,237,0.45)' : '0 4px 20px rgba(124,58,237,0.35)' }
+          : { background: 'var(--bg-glass)', color: 'var(--text)', border: '1px solid var(--border2)', backdropFilter: 'blur(10px)', borderColor: hovered ? 'var(--violet)' : 'var(--border2)' }
+        ),
+        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+      }}
     >{children}</button>
   )
 }
@@ -200,7 +216,7 @@ function Chip({ children, color }) {
   return (
     <span style={{
       fontSize: '0.6rem', padding: '0.15rem 0.45rem', borderRadius: 99,
-      fontWeight: 500, background: `${color}18`, color,
+      fontWeight: 500, background: `${color}18`, color, flexShrink: 0,
     }}>{children}</span>
   )
 }

@@ -99,3 +99,24 @@ body {
 
 /* ── LAYOUT ── */
 .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  /* Navbar: hide username text on mobile */
+  .nav-username-text { display: none; }
+
+  /* Dashboard two-col → single col */
+  .dash-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Hero mockup: hide sidebar on small screens */
+  .hero-mockup-sidebar { display: none; }
+
+  /* Metrics row: 2 cols on mobile */
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
