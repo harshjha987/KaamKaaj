@@ -48,31 +48,28 @@ export default function WorkspacePage({ refreshInbox }) {
   if (!isAuthenticated) return <Navigate to="/auth" replace />
 
   const fetchAll = async () => {
-    setLoading(true)
-    try {
-      const [wsRes, myMemRes] = await Promise.all([
-        workspaceService.get(workspaceId),
-        workspaceService.getMyMembership(workspaceId),
-      ])
-      setWorkspace(wsRes.data)
-      setMyMembership(myMemRes.data)
+  try {
+    const [wsRes, myMemRes, memRes] = await Promise.all([
+      workspaceService.get(workspaceId),
+      workspaceService.getMyMembership(workspaceId),
+      workspaceService.getMembers(workspaceId).catch(() => ({ data: [] })),
+    ])
+    setWorkspace(wsRes.data)
+    setMyMembership(myMemRes.data)
+    setMembers(memRes.data)
 
-      const role = myMemRes.data?.role
+    const role = myMemRes.data?.role
+    await fetchTasks(role)
 
-      // ADMIN can see all members + all invitations
-      // MEMBER only sees their own membership (no full member list)
-      if (role === 'ADMIN') {
-        const [memRes, invRes] = await Promise.all([
-          workspaceService.getMembers(workspaceId).catch(() => ({ data: [] })),
-          invitationService.list(workspaceId).catch(() => ({ data: [] })),
-        ])
-        setMembers(memRes.data)
-        setInvitations(invRes.data)
-      }
-    } catch (err) {
-      addToast('Failed to load workspace', 'error')
-      navigate('/dashboard')
+    if (role === 'ADMIN') {
+      const invRes = await invitationService.list(workspaceId).catch(() => ({ data: [] }))
+      setInvitations(invRes.data)
     }
+  } catch (err) {
+    addToast('Failed to load workspace', 'error')
+    navigate('/dashboard')
+  }
+
     setLoading(false)
   }
 
@@ -91,33 +88,37 @@ export default function WorkspacePage({ refreshInbox }) {
   }
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      try {
-        const [wsRes, myMemRes] = await Promise.all([
-          workspaceService.get(workspaceId),
-          workspaceService.getMyMembership(workspaceId),
-        ])
-        setWorkspace(wsRes.data)
-        setMyMembership(myMemRes.data)
+    // Replace the fetchAll and useEffect load function in WorkspacePage.jsx
 
-        const role = myMemRes.data?.role
-        await fetchTasks(role)
+const load = async () => {
+  setLoading(true)
+  try {
+    const [wsRes, myMemRes] = await Promise.all([
+      workspaceService.get(workspaceId),
+      workspaceService.getMyMembership(workspaceId),
+    ])
+    setWorkspace(wsRes.data)
+    setMyMembership(myMemRes.data)
 
-        if (role === 'ADMIN') {
-          const [memRes, invRes] = await Promise.all([
-            workspaceService.getMembers(workspaceId).catch(() => ({ data: [] })),
-            invitationService.list(workspaceId).catch(() => ({ data: [] })),
-          ])
-          setMembers(memRes.data)
-          setInvitations(invRes.data)
-        }
-      } catch (err) {
-        addToast('Failed to load workspace', 'error')
-        navigate('/dashboard')
-      }
-      setLoading(false)
+    const role = myMemRes.data?.role
+    await fetchTasks(role)
+
+    // ALL members (admin and member) can see the member list
+    // of their own workspace — same team should know each other
+    const memRes = await workspaceService.getMembers(workspaceId).catch(() => ({ data: [] }))
+    setMembers(memRes.data)
+
+    // Only ADMIN sees invitations
+    if (role === 'ADMIN') {
+      const invRes = await invitationService.list(workspaceId).catch(() => ({ data: [] }))
+      setInvitations(invRes.data)
     }
+  } catch (err) {
+    addToast('Failed to load workspace', 'error')
+    navigate('/dashboard')
+  }
+  setLoading(false)
+}
     load()
   }, [workspaceId])
 

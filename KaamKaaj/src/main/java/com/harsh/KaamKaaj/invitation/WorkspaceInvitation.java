@@ -15,7 +15,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(
-        name = "workspace_invitations",
+        name = "workspace_invitations"
         // A user can only have ONE pending invitation per workspace
         // at a time. The DB enforces this — not just the app code.
         // Without this constraint, an admin could spam invitations
@@ -27,7 +27,7 @@ import java.time.Instant;
         // we'll enforce the "only one pending" rule in the service
         // layer since the DB constraint covers all statuses.
         // We'll handle re-invite logic in InvitationService.
-        
+
 )
 public class WorkspaceInvitation {
 

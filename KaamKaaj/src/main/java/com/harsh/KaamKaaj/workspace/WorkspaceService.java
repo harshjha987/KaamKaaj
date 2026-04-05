@@ -76,7 +76,7 @@ public class WorkspaceService {
         return workspaceMapper.toResponse(workspace);
     }
 
-    @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
+    @PreAuthorize("@workspaceAuthz.isMember(#workspaceId, authentication)")
     public List<MemberResponse> getWorkspaceMembers(String workspaceId,
                                                     Authentication authentication) {
         return memberRepository
