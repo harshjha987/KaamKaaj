@@ -4,6 +4,7 @@ import com.harsh.KaamKaaj.task.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,13 +34,16 @@ public class TaskController {
                 .body(taskService.createTask(workspaceId, request, authentication));
     }
 
-    @Operation(summary = "List workspace tasks",
-            description = "ADMIN only. Returns all tasks in the workspace.")
-    @GetMapping("/api/v1/workspaces/{workspaceId}/tasks")
-    public ResponseEntity<List<TaskResponse>> getWorkspaceTasks(
+    @GetMapping
+    @Operation(summary = "List all tasks in workspace (paginated)")
+    public ResponseEntity<Page<TaskResponse>> getWorkspaceTasks(
             @PathVariable String workspaceId,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
-        return ResponseEntity.ok(taskService.getWorkspaceTasks(workspaceId, authentication));
+        return ResponseEntity.ok(
+                taskService.getWorkspaceTasks(workspaceId, page, size, authentication)
+        );
     }
 
     @Operation(summary = "Get task by ID",

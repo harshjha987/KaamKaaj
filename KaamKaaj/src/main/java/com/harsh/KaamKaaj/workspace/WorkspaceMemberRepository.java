@@ -1,5 +1,7 @@
 package com.harsh.KaamKaaj.workspace;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -25,7 +27,8 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     // -------------------------------------------------------
     List<WorkspaceMember> findByWorkspaceIdAndStatus(
             String workspaceId, MemberStatus status);
-
+    // Add this alongside your existing findByWorkspaceIdAndStatus
+    Page<WorkspaceMember> findByWorkspaceIdAndStatus(String workspaceId, MemberStatus status, Pageable pageable);
     // -------------------------------------------------------
     // NEW: Count how many ADMINs are in a workspace.
     // Used by the remove-member endpoint to prevent removing

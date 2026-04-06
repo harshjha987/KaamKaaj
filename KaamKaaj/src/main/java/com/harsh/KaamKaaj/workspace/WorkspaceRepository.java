@@ -27,4 +27,7 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, String> {
         AND wm.status = 'ACTIVE'
     """)
     List<Workspace> findActiveWorkspacesByUserId(@Param("userId") String userId);
+
+
+
 }

@@ -1,5 +1,7 @@
 package com.harsh.KaamKaaj.task;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,4 +33,7 @@ public interface TaskRepository extends JpaRepository<Task, String> {
     List<Task> findAcceptedTasksByWorkspaceAndUser(
             @Param("workspaceId") String workspaceId,
             @Param("userId") String userId);
+
+    // Add this alongside your existing findByWorkspaceId
+    Page<Task> findByWorkspaceId(String workspaceId, Pageable pageable);
 }

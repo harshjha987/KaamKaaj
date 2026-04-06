@@ -11,6 +11,10 @@ import com.harsh.KaamKaaj.workspace.dto.CreateWorkspaceRequest;
 import com.harsh.KaamKaaj.workspace.dto.MemberResponse;
 import com.harsh.KaamKaaj.workspace.dto.WorkspaceResponse;
 import com.harsh.KaamKaaj.workspace.mapper.WorkspaceMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -76,14 +80,15 @@ public class WorkspaceService {
         return workspaceMapper.toResponse(workspace);
     }
 
+    @Transactional(readOnly = true)
     @PreAuthorize("@workspaceAuthz.isMember(#workspaceId, authentication)")
-    public List<MemberResponse> getWorkspaceMembers(String workspaceId,
+    public Page<MemberResponse> getWorkspaceMembers(String workspaceId,
+                                                    int page, int size,
                                                     Authentication authentication) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("joinedAt").ascending());
         return memberRepository
-                .findByWorkspaceIdAndStatus(workspaceId, MemberStatus.ACTIVE)
-                .stream()
-                .map(workspaceMapper::toMemberResponse)
-                .toList();
+                .findByWorkspaceIdAndStatus(workspaceId, MemberStatus.ACTIVE, pageable)
+                .map(workspaceMapper::toMemberResponse);
     }
 
     @PreAuthorize("@workspaceAuthz.isMember(#workspaceId, authentication)")

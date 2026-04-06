@@ -11,6 +11,10 @@ import com.harsh.KaamKaaj.model.UserPrincipal;
 import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.user.UserRepo;
 import com.harsh.KaamKaaj.workspace.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -190,5 +194,16 @@ public class InvitationService {
 
         invitation.setRespondedAt(Instant.now());
         return invitationMapper.toResponse(invitationRepository.save(invitation));
+    }
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
+    public Page<InvitationResponse> listInvitations(String workspaceId,
+                                                    int page, int size,
+                                                    Authentication authentication) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return invitationRepository
+                .findByWorkspaceId(workspaceId, pageable)
+                .map(invitationMapper::toResponse);
     }
 }

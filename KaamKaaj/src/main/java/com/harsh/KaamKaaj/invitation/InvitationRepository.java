@@ -1,5 +1,7 @@
 package com.harsh.KaamKaaj.invitation;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -23,4 +25,6 @@ public interface InvitationRepository extends JpaRepository<WorkspaceInvitation,
     // verify workspace ownership in the service
     Optional<WorkspaceInvitation> findByIdAndWorkspaceId(
             String id, String workspaceId);
+
+    Page<WorkspaceInvitation> findByWorkspaceId(String workspaceId, Pageable pageable);
 }

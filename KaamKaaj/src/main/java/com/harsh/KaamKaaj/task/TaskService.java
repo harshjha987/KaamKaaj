@@ -9,6 +9,10 @@ import com.harsh.KaamKaaj.task.mapper.TaskMapper;
 import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.user.UserRepo;
 import com.harsh.KaamKaaj.workspace.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -73,12 +77,14 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
-    public List<TaskResponse> getWorkspaceTasks(String workspaceId,
+    public Page<TaskResponse> getWorkspaceTasks(String workspaceId,
+                                                int page, int size,
                                                 Authentication authentication) {
-        return taskRepository.findByWorkspaceId(workspaceId)
-                .stream()
-                .map(taskMapper::toResponse)
-                .toList();
+        // Sort by createdAt descending — newest tasks first
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return taskRepository
+                .findByWorkspaceId(workspaceId, pageable)
+                .map(taskMapper::toResponse);
     }
 
     // Admins see any task in workspace. Members see only their accepted tasks.

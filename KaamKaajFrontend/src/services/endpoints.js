@@ -15,34 +15,47 @@ export const userService = {
 }
 
 export const workspaceService = {
-  create:         (data) => api.post('/workspaces', { name: data.name, description: data.description }),
-  list:           () => api.get('/workspaces'),
-  get:            (workspaceId) => api.get(`/workspaces/${workspaceId}`),
-  getMembers:     (workspaceId) => api.get(`/workspaces/${workspaceId}/members`),
-  getMyMembership:(workspaceId) => api.get(`/workspaces/${workspaceId}/members/me`),
-  removeMember:   (workspaceId, userId) => api.delete(`/workspaces/${workspaceId}/members/${userId}`),
-  changeMemberRole:(workspaceId, userId, role) => api.patch(`/workspaces/${workspaceId}/members/${userId}/role`, { role }),
+  create:          (data) => api.post('/workspaces', data),
+  list:            () => api.get('/workspaces'),
+  get:             (workspaceId) => api.get(`/workspaces/${workspaceId}`),
+  getMembers:      (workspaceId, page = 0, size = 20) =>
+    api.get(`/workspaces/${workspaceId}/members`, { params: { page, size } }),
+  getMyMembership: (workspaceId) =>
+    api.get(`/workspaces/${workspaceId}/members/me`),
+  removeMember:    (workspaceId, userId) =>
+    api.delete(`/workspaces/${workspaceId}/members/${userId}`),
+  changeMemberRole:(workspaceId, userId, role) =>
+    api.patch(`/workspaces/${workspaceId}/members/${userId}/role`, { role }),
 }
 
 export const invitationService = {
-  send:      (workspaceId, invitedUserId) => api.post(`/workspaces/${workspaceId}/invitations`, { invitedUserId }),
-  list:      (workspaceId) => api.get(`/workspaces/${workspaceId}/invitations`),
-  cancel:    (workspaceId, invitationId) => api.delete(`/workspaces/${workspaceId}/invitations/${invitationId}`),
+  send:      (workspaceId, invitedUserId) =>
+    api.post(`/workspaces/${workspaceId}/invitations`, { invitedUserId }),
+  list:      (workspaceId, page = 0, size = 10) =>
+    api.get(`/workspaces/${workspaceId}/invitations`, { params: { page, size } }),
+  cancel:    (workspaceId, invitationId) =>
+    api.delete(`/workspaces/${workspaceId}/invitations/${invitationId}`),
   myPending: () => api.get('/me/invitations'),
   accept:    (invitationId) => api.post(`/me/invitations/${invitationId}/accept`),
   decline:   (invitationId) => api.post(`/me/invitations/${invitationId}/decline`),
 }
 
 export const taskService = {
-  create:       (workspaceId, data) => api.post(`/workspaces/${workspaceId}/tasks`, { title: data.title, description: data.description, priority: data.priority, dueDate: data.dueDate }),
-  list:         (workspaceId) => api.get(`/workspaces/${workspaceId}/tasks`),
-  get:          (workspaceId, taskId) => api.get(`/workspaces/${workspaceId}/tasks/${taskId}`),
-  update:       (workspaceId, taskId, data) => api.put(`/workspaces/${workspaceId}/tasks/${taskId}`, data),
-  delete:       (workspaceId, taskId) => api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`),
-  // MEMBER: get only their accepted tasks in a workspace
-  myTasks:      (workspaceId) => api.get(`/workspaces/${workspaceId}/me/tasks`),
-  // MEMBER: update task status (NOT_STARTED → IN_PROGRESS → COMPLETED)
-  updateStatus: (workspaceId, taskId, status) => api.patch(`/workspaces/${workspaceId}/tasks/${taskId}/status`, { status }),
+  // page and size now supported
+  list:         (workspaceId, page = 0, size = 10) =>
+    api.get(`/workspaces/${workspaceId}/tasks`, { params: { page, size } }),
+  myTasks:      (workspaceId) =>
+    api.get(`/workspaces/${workspaceId}/me/tasks`),
+  get:          (workspaceId, taskId) =>
+    api.get(`/workspaces/${workspaceId}/tasks/${taskId}`),
+  create:       (workspaceId, data) =>
+    api.post(`/workspaces/${workspaceId}/tasks`, data),
+  update:       (workspaceId, taskId, data) =>
+    api.put(`/workspaces/${workspaceId}/tasks/${taskId}`, data),
+  delete:       (workspaceId, taskId) =>
+    api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`),
+  updateStatus: (workspaceId, taskId, status) =>
+    api.patch(`/workspaces/${workspaceId}/tasks/${taskId}/status`, { status }),
 }
 
 export const assignmentService = {
