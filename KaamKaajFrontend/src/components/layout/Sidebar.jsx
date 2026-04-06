@@ -11,10 +11,10 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
   const { user }  = useAuthStore()
 
   const NAV = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
-    { icon: Mail,            label: 'Inbox',    path: '/dashboard', badge: inboxCount },
-    { icon: CheckSquare,     label: 'My Tasks', path: '/dashboard' },
-  ]
+  { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
+  { icon: Mail,            label: 'Inbox',    path: '/dashboard', badge: inboxCount },
+  { icon: CheckSquare,     label: 'My Tasks', path: '/my-tasks' },
+]
 
   return (
     <aside style={{

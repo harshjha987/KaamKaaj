@@ -72,12 +72,12 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Verify current password is correct before allowing change
-        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+        if (!encoder.matches(currentPassword, user.getPasswordHash())) {
             throw new DuplicateResourceException("Current password is incorrect");
         }
 
         // Update the password
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setPasswordHash(encoder.encode(newPassword));
         userRepo.save(user);
 
         // Revoke all existing refresh tokens for this user.
