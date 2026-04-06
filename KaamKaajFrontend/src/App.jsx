@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage'
 import WorkspacePage from './pages/WorkspacePage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import MyTasksPage from './pages/MyTasksPage'
+import InboxPage from './pages/InboxPage'
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
@@ -73,7 +74,11 @@ export default function App() {
             <AppShell><MyTasksPage /></AppShell>
           </ProtectedRoute>
         } />
-
+        <Route path="/inbox" element={
+          <ProtectedRoute>
+            <AppShell><InboxPage /></AppShell>
+          </ProtectedRoute>
+        } />
           {/* Fallback */}
           <Route path="*" element={
             <AnimatedRoute>

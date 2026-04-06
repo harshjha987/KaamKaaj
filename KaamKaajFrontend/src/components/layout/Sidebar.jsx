@@ -22,10 +22,10 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
   }, [])
 
   const NAV = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
-    { icon: Mail,            label: 'Inbox',    path: '/dashboard', badge: inboxCount },
-    { icon: CheckSquare,     label: 'My Tasks', path: '/my-tasks' },
-  ]
+  { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
+  { icon: Mail,            label: 'Inbox',    path: '/inbox',     badge: inboxCount },
+  { icon: CheckSquare,     label: 'My Tasks', path: '/my-tasks'  },
+]
 
   const sidebarContent = (
     <aside style={{

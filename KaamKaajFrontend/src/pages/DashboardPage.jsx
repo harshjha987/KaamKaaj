@@ -214,58 +214,61 @@ export default function DashboardPage({ refreshWorkspaces, refreshInbox }) {
         : <WorkspaceGrid workspaces={workspaces} myMemberships={myMemberships} onNew={() => setShowCreateWs(true)} />
       }
 
-      {/* Activity + Inbox */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1rem', marginTop: '1rem' }}>
+      {/* Activity + Inbox — responsive two col */}
+<div style={{
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+  gap: '1rem',
+  marginTop: '1rem',
+}}>
+  {/* Activity Feed */}
+  <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem' }}>
+    <div style={{
+      fontSize: '0.9rem', fontWeight: 600, fontFamily: 'var(--font-display)',
+      color: 'var(--text)', marginBottom: '1rem',
+      paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)',
+    }}>
+      Recent Activity
+    </div>
 
-        {/* Activity Feed */}
-        <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.25rem' }}>
-          <div style={{
-            fontSize: '0.9rem', fontWeight: 600, fontFamily: 'var(--font-display)',
-            color: 'var(--text)', marginBottom: '1rem',
-            paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)',
-          }}>
-            Recent Activity
-          </div>
-
-          {loading && (
-            <div style={{ fontSize: '0.82rem', color: 'var(--text3)', textAlign: 'center', padding: '2rem 0' }}>
-              Loading activity...
-            </div>
-          )}
-
-          {!loading && activityFeed.length === 0 && (
-            <div style={{ fontSize: '0.82rem', color: 'var(--text3)', textAlign: 'center', padding: '2rem 0' }}>
-              No activity yet — create a workspace or task to get started.
-            </div>
-          )}
-
-          {!loading && activityFeed.map((item, idx) => (
-            <div key={item.id} style={{
-              display: 'flex', gap: '0.75rem',
-              padding: '0.65rem 0',
-              borderBottom: idx < activityFeed.length - 1 ? '1px solid var(--border)' : 'none',
-            }}>
-              {/* Colored dot */}
-              <div style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: item.color, marginTop: 6, flexShrink: 0,
-              }} />
-              <div>
-                <div
-                  style={{ fontSize: '0.82rem', color: 'var(--text2)', lineHeight: 1.5 }}
-                  dangerouslySetInnerHTML={{ __html: item.text }}
-                />
-                <div style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '0.15rem' }}>
-                  {timeAgo(item.time)}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <InboxPanel onRespond={fetchData} />
+    {loading && (
+      <div style={{ fontSize: '0.82rem', color: 'var(--text3)', textAlign: 'center', padding: '2rem 0' }}>
+        Loading activity...
       </div>
+    )}
 
+    {!loading && activityFeed.length === 0 && (
+      <div style={{ fontSize: '0.82rem', color: 'var(--text3)', textAlign: 'center', padding: '2rem 0' }}>
+        No activity yet — create a workspace or task to get started.
+      </div>
+    )}
+
+    {!loading && activityFeed.map((item, idx) => (
+      <div key={item.id} style={{
+        display: 'flex', gap: '0.75rem',
+        padding: '0.65rem 0',
+        borderBottom: idx < activityFeed.length - 1 ? '1px solid var(--border)' : 'none',
+      }}>
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: item.color, marginTop: 6, flexShrink: 0,
+        }} />
+        <div>
+          <div
+            style={{ fontSize: '0.82rem', color: 'var(--text2)', lineHeight: 1.5 }}
+            dangerouslySetInnerHTML={{ __html: item.text }}
+          />
+          <div style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: '0.15rem' }}>
+            {timeAgo(item.time)}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {/* Inbox preview — shows count + link to full inbox page */}
+  <InboxPanel onRespond={fetchData} />
+</div>
       {/* Create workspace modal */}
       <Modal open={showCreateWs} onClose={() => setShowCreateWs(false)} title="Create workspace" subtitle="Give your workspace a name. You'll be the admin.">
         <Input
