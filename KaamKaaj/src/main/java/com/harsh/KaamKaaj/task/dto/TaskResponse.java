@@ -29,4 +29,6 @@ public class TaskResponse {
     // Null if the task has no active assignment (PENDING or ACCEPTED).
     // Populated by TaskMapper from the latest non-cancelled, non-declined assignment.
     private String assignedToUsername;
+    private String lastAssignmentStatus;
+    private String completedByUsername;
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PriorityBadge } from '../ui/Badge'
 import { formatDate, getInitials, getAvatarColor } from '../../utils/helpers'
-import { UserCheck, Trash2 } from 'lucide-react'
+import { UserCheck, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 
 const COLUMNS = [
   { key: 'NOT_STARTED', label: 'Not Started', accent: 'var(--text3)'  },
@@ -70,9 +70,10 @@ export default function TaskBoard({ tasks = [], myRole, members = [], onAssign, 
 
 function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const nextStatus = NEXT_STATUS[task.status]
-  const nextLabel  = NEXT_LABEL[task.status]
-  const isAssigned = !!task.assignedToUsername
+  const nextStatus  = NEXT_STATUS[task.status]
+  const nextLabel   = NEXT_LABEL[task.status]
+  const isAssigned  = !!task.assignedToUsername
+  const wasDeclined = task.lastAssignmentStatus === 'DECLINED'
 
   return (
     <motion.div
@@ -80,12 +81,16 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
       style={{
         background: 'var(--bg3)', borderRadius: 'var(--radius-sm)',
         padding: '0.85rem', marginBottom: '0.5rem',
-        border: `1px solid ${done ? 'rgba(22,163,74,0.15)' : 'var(--border)'}`,
-        opacity: done ? 0.75 : 1,
+        border: `1px solid ${
+          done            ? 'rgba(22,163,74,0.15)' :
+          wasDeclined     ? 'rgba(245,158,11,0.25)' :
+          'var(--border)'
+        }`,
+        opacity: done ? 0.8 : 1,
         transition: 'var(--transition)',
       }}
     >
-      {/* Title row with delete button for admin */}
+      {/* Title row + delete button */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <div style={{
           flex: 1, fontSize: '0.85rem', fontWeight: 500, lineHeight: 1.4,
@@ -95,42 +100,35 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
           {task.title}
         </div>
 
-        {/* Delete button — admin only, shows on hover via confirmDelete state */}
         {myRole === 'ADMIN' && (
           confirmDelete ? (
-            // Confirm state — two small buttons
             <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
               <button
                 onClick={() => { onDelete?.(task); setConfirmDelete(false) }}
-                title="Confirm delete"
                 style={{
                   fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.45rem',
                   borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                   fontFamily: 'var(--font-body)',
                   background: 'rgba(220,38,38,0.12)', color: '#DC2626',
                   border: '1px solid rgba(220,38,38,0.25)',
-                  transition: 'var(--transition)',
                 }}
               >
                 Delete
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                title="Cancel"
                 style={{
                   fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.45rem',
                   borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                   fontFamily: 'var(--font-body)',
                   background: 'var(--bg2)', color: 'var(--text3)',
                   border: '1px solid var(--border)',
-                  transition: 'var(--transition)',
                 }}
               >
                 Cancel
               </button>
             </div>
           ) : (
-            // Normal state — trash icon
             <button
               onClick={() => setConfirmDelete(true)}
               title="Delete task"
@@ -149,14 +147,14 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
         )}
       </div>
 
-      {/* Description preview */}
+      {/* Description */}
       {task.description && (
         <div style={{ fontSize: '0.75rem', color: 'var(--text3)', marginBottom: '0.5rem', lineHeight: 1.4 }}>
           {task.description.length > 80 ? task.description.slice(0, 80) + '...' : task.description}
         </div>
       )}
 
-      {/* Priority + due date + created-by avatar */}
+      {/* Priority + due date + avatar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
         <PriorityBadge priority={task.priority} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -176,47 +174,81 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
         </div>
       </div>
 
-      {/* ADMIN — assign / assigned-to button */}
-      {myRole === 'ADMIN' && !done && (
-        isAssigned ? (
-          <button
-            onClick={() => onAssign?.(task)}
-            title="Click to re-assign"
-            style={{
-              width: '100%', fontSize: '0.72rem', fontWeight: 500,
-              padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              background: 'rgba(22,163,74,0.08)', color: '#16A34A',
-              border: '1px solid rgba(22,163,74,0.2)',
-              display: 'flex', alignItems: 'center', gap: '0.4rem',
-              transition: 'var(--transition)',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.15)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.08)'}
-          >
-            <UserCheck size={12} />
-            <span>Assigned to <strong>{task.assignedToUsername}</strong></span>
-          </button>
-        ) : (
-          <button
-            onClick={() => onAssign?.(task)}
-            style={{
-              width: '100%', fontSize: '0.72rem', fontWeight: 500,
-              padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              background: 'var(--violet-alpha)', color: 'var(--violet)',
-              border: '1px solid rgba(124,58,237,0.2)',
-              transition: 'var(--transition)',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.18)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'var(--violet-alpha)'}
-          >
-            + Assign to member
-          </button>
-        )
+      {/* ── COMPLETED column — show who completed it ── */}
+      {done && task.completedByUsername && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.4rem',
+          padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
+          background: 'rgba(22,163,74,0.08)',
+          border: '1px solid rgba(22,163,74,0.15)',
+        }}>
+          <CheckCircle2 size={12} color="#16A34A" />
+          <span style={{ fontSize: '0.72rem', color: '#16A34A', fontWeight: 500 }}>
+            Completed by <strong>{task.completedByUsername}</strong>
+          </span>
+        </div>
       )}
 
-      {/* MEMBER — status update button */}
+      {/* ── ADMIN view — not done ── */}
+      {myRole === 'ADMIN' && !done && (
+        <>
+          {/* Declined indicator — shown when last assignment was declined */}
+          {wasDeclined && !isAssigned && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-sm)',
+              background: 'rgba(245,158,11,0.08)',
+              border: '1px solid rgba(245,158,11,0.2)',
+              marginBottom: '0.5rem',
+            }}>
+              <AlertTriangle size={11} color="#F59E0B" />
+              <span style={{ fontSize: '0.7rem', color: '#F59E0B', fontWeight: 500 }}>
+                Last assignment was declined
+              </span>
+            </div>
+          )}
+
+          {/* Assign / assigned-to button */}
+          {isAssigned ? (
+            <button
+              onClick={() => onAssign?.(task)}
+              title="Click to re-assign"
+              style={{
+                width: '100%', fontSize: '0.72rem', fontWeight: 500,
+                padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer', fontFamily: 'var(--font-body)',
+                background: 'rgba(22,163,74,0.08)', color: '#16A34A',
+                border: '1px solid rgba(22,163,74,0.2)',
+                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                transition: 'var(--transition)',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.15)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.08)'}
+            >
+              <UserCheck size={12} />
+              <span>Assigned to <strong>{task.assignedToUsername}</strong></span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onAssign?.(task)}
+              style={{
+                width: '100%', fontSize: '0.72rem', fontWeight: 500,
+                padding: '0.35rem 0.6rem', borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer', fontFamily: 'var(--font-body)',
+                background: 'var(--violet-alpha)', color: 'var(--violet)',
+                border: '1px solid rgba(124,58,237,0.2)',
+                transition: 'var(--transition)',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.18)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'var(--violet-alpha)'}
+            >
+              {wasDeclined ? '↻ Re-assign to member' : '+ Assign to member'}
+            </button>
+          )}
+        </>
+      )}
+
+      {/* ── MEMBER — status update ── */}
       {myRole === 'MEMBER' && nextLabel && (
         <button
           onClick={() => onStatusUpdate?.(task, nextStatus)}
