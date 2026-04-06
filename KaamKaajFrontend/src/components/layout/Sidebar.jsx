@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Mail, CheckSquare, Plus, Settings, ChevronRight } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { LayoutDashboard, Mail, CheckSquare, Plus, Settings, ChevronRight, X, Menu } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import useAuthStore from '../../store/authStore'
 import Avatar from '../ui/Avatar'
 
@@ -9,21 +9,46 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user }  = useAuthStore()
+  const [open, setOpen] = useState(false)
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => { setOpen(false) }, [location.pathname])
+
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const NAV = [
-  { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
-  { icon: Mail,            label: 'Inbox',    path: '/dashboard', badge: inboxCount },
-  { icon: CheckSquare,     label: 'My Tasks', path: '/my-tasks' },
-]
+    { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
+    { icon: Mail,            label: 'Inbox',    path: '/dashboard', badge: inboxCount },
+    { icon: CheckSquare,     label: 'My Tasks', path: '/my-tasks' },
+  ]
 
-  return (
+  const sidebarContent = (
     <aside style={{
       width: 256, flexShrink: 0,
       background: 'var(--bg3)', borderRight: '1px solid var(--border)',
       display: 'flex', flexDirection: 'column',
-      position: 'sticky', top: 64, height: 'calc(100vh - 64px)',
+      height: '100%',
       overflowY: 'auto', padding: '1.25rem 0',
     }}>
+      {/* Mobile close button */}
+      <div className="mobile-only" style={{ display: 'none', justifyContent: 'flex-end', padding: '0 1rem', marginBottom: '0.5rem' }}>
+        <button
+          onClick={() => setOpen(false)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--text2)', padding: '0.25rem',
+            display: 'flex', alignItems: 'center',
+          }}
+        >
+          <X size={18} />
+        </button>
+      </div>
+
       {/* USER CHIP */}
       <div style={{ padding: '0 1rem', marginBottom: '1.25rem' }}>
         <div style={{
@@ -44,7 +69,14 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
       {/* MAIN NAV */}
       <div style={{ padding: '0 0.75rem', marginBottom: '1.5rem' }}>
         {NAV.map(({ icon: Icon, label, path, badge }) => {
-          const active = location.pathname === path
+          const active = location.pathname === path && label === 'Overview'
+            ? location.pathname === '/dashboard'
+            : location.pathname === path
+          const isActive = location.pathname === path && (
+            label === 'Overview' ? true :
+            label === 'My Tasks' ? location.pathname === '/my-tasks' :
+            false
+          )
           return (
             <motion.button
               key={label} whileTap={{ scale: 0.98 }}
@@ -55,15 +87,15 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
                 borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                 border: 'none', textAlign: 'left',
                 fontFamily: 'var(--font-body)', fontSize: '0.875rem',
-                fontWeight: active ? 500 : 400,
-                color: active ? 'var(--violet)' : 'var(--text2)',
-                background: active ? 'var(--violet-alpha)' : 'none',
+                fontWeight: isActive ? 500 : 400,
+                color: isActive ? 'var(--violet)' : 'var(--text2)',
+                background: isActive ? 'var(--violet-alpha)' : 'none',
                 transition: 'var(--transition)', marginBottom: '0.15rem',
               }}
-              onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = 'var(--bg2)'; e.currentTarget.style.color = 'var(--text)' }}}
-              onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text2)' }}}
+              onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = 'var(--bg2)'; e.currentTarget.style.color = 'var(--text)' }}}
+              onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text2)' }}}
             >
-              <Icon size={15} style={{ opacity: active ? 1 : 0.65, flexShrink: 0 }} />
+              <Icon size={15} style={{ opacity: isActive ? 1 : 0.65, flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{label}</span>
               {badge > 0 && (
                 <span style={{
@@ -132,11 +164,10 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
         </motion.button>
       </div>
 
-      {/* SETTINGS — now wired up */}
+      {/* SETTINGS */}
       <div style={{ padding: '0 0.75rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', marginTop: '1rem' }}>
         <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={onSettings}
+          whileTap={{ scale: 0.98 }} onClick={onSettings}
           style={{
             display: 'flex', alignItems: 'center', gap: '0.6rem',
             width: '100%', padding: '0.55rem 0.75rem',
@@ -153,6 +184,94 @@ export default function Sidebar({ workspaces = [], inboxCount = 0, onNewWorkspac
         </motion.button>
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      {/* ── Desktop sidebar — always visible ── */}
+      <div className="sidebar-desktop" style={{
+        position: 'sticky', top: 64, height: 'calc(100vh - 64px)',
+      }}>
+        {sidebarContent}
+      </div>
+
+      {/* ── Mobile hamburger button ── */}
+      <button
+        className="sidebar-hamburger"
+        onClick={() => setOpen(true)}
+        style={{
+          display: 'none', // shown via CSS on mobile
+          position: 'fixed', bottom: '1.5rem', left: '1.5rem',
+          zIndex: 200, width: 48, height: 48, borderRadius: '50%',
+          background: 'var(--grad2)', color: '#fff', border: 'none',
+          cursor: 'pointer', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(124,58,237,0.4)',
+        }}
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* ── Mobile drawer ── */}
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setOpen(false)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 150,
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(4px)',
+              }}
+            />
+
+            {/* Drawer sliding in from left */}
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              style={{
+                position: 'fixed', top: 0, left: 0, bottom: 0,
+                width: 280, zIndex: 200,
+              }}
+            >
+              {/* Close button inside drawer */}
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 1 }}>
+                <button
+                  onClick={() => setOpen(false)}
+                  style={{
+                    background: 'var(--bg2)', border: '1px solid var(--border)',
+                    borderRadius: '50%', width: 32, height: 32,
+                    cursor: 'pointer', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--text2)',
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+              {sidebarContent}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .sidebar-desktop { display: none !important; }
+          .sidebar-hamburger { display: flex !important; }
+        }
+        @media (min-width: 769px) {
+          .sidebar-desktop { display: block; }
+          .sidebar-hamburger { display: none !important; }
+        }
+      `}</style>
+    </>
   )
 }
 
