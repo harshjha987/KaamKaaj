@@ -9,6 +9,7 @@ import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import WorkspacePage from './pages/WorkspacePage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
@@ -48,7 +49,9 @@ export default function App() {
           <Route path="/auth" element={
             <AnimatedRoute><AuthPage /></AnimatedRoute>
           } />
-
+        <Route path="/reset-password" element=
+        {<ResetPasswordPage />} 
+        />
           {/* Protected — wrapped in AppShell (sidebar) */}
           <Route path="/dashboard" element={
             <ProtectedRoute>

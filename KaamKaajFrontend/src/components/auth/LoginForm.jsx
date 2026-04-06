@@ -59,10 +59,12 @@ export default function LoginForm({ onSwitch }) {
           autoComplete="email"
         />
         <div style={{ position: 'relative' }}>
+          <Link to = "/reset-password">
           <div style={{
             position: 'absolute', top: 0, right: 0,
             fontSize: '0.78rem', color: 'var(--violet)', cursor: 'pointer',
-          }}>Forgot?</div>
+          }}>Forgot Password?</div>
+          </Link>
           <Input
             label="Password"
             type="password"
