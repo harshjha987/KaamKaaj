@@ -197,44 +197,40 @@ export default function LoginForm({ onSwitch }) {
                 autoComplete="email"
               />
 
-              {/* Password field with Forgot? link in the label area */}
-              <div style={{ marginBottom: '1.1rem' }}>
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'center', marginBottom: '0.4rem',
+            
+              {/* Password label row — forgot link sits beside it */}
+              <div style={{ marginBottom: '0.4rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{
+                  fontSize: '0.8rem', fontWeight: 500,
+                  color: 'var(--text2)', letterSpacing: '0.01em',
                 }}>
-                  <label style={{
-                    fontSize: '0.8rem', fontWeight: 500,
-                    color: 'var(--text2)', letterSpacing: '0.01em',
-                  }}>
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => { setShowForgot(true); setForgotEmail(form.email) }}
-                    style={{
-                      fontSize: '0.78rem', color: 'var(--violet)',
-                      background: 'none', border: 'none',
-                      cursor: 'pointer', fontFamily: 'var(--font-body)',
-                      padding: 0, transition: 'var(--transition)',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.75'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  error={errors.password}
-                  autoComplete="current-password"
-                  style={{ marginBottom: 0 }}
-                />
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => { setShowForgot(true); setForgotEmail(form.email) }}
+                  style={{
+                    fontSize: '0.78rem', color: 'var(--violet)',
+                    background: 'none', border: 'none',
+                    cursor: 'pointer', fontFamily: 'var(--font-body)',
+                    padding: 0, transition: 'var(--transition)',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.75'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  Forgot password?
+                </button>
               </div>
 
+              
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                error={errors.password}
+                autoComplete="current-password"
+              />
               <Button
                 type="submit"
                 fullWidth

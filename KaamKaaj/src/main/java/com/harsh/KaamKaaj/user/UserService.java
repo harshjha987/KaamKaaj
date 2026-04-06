@@ -1,5 +1,6 @@
 package com.harsh.KaamKaaj.user;
 
+import com.harsh.KaamKaaj.auth.RefreshTokenRepository;
 import com.harsh.KaamKaaj.exception.DuplicateResourceException;
 import com.harsh.KaamKaaj.exception.ResourceNotFoundException;
 import com.harsh.KaamKaaj.user.dto.UserResponse;
@@ -18,12 +19,14 @@ public class UserService {
     private final UserRepo userRepo;
     private final BCryptPasswordEncoder encoder;
     private final UserMapper userMapper;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public UserService(UserRepo userRepo, BCryptPasswordEncoder encoder, UserMapper userMapper) {
+    public UserService(UserRepo userRepo, BCryptPasswordEncoder encoder, UserMapper userMapper, RefreshTokenRepository refreshTokenRepository) {
 
         this.userRepo = userRepo;
         this.encoder = encoder;
         this.userMapper = userMapper;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     // Global user search — returns ONLY minimal identity info.
@@ -69,13 +72,18 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Verify current password is correct before allowing change
-        if (!encoder.matches(currentPassword, user.getPasswordHash())) {
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new DuplicateResourceException("Current password is incorrect");
-            // Using DuplicateResourceException here gives a 409 — you can also throw
-            // a custom BadRequestException if you have one, or just RuntimeException
         }
 
-        user.setPasswordHash(encoder.encode(newPassword));
+        // Update the password
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepo.save(user);
+
+        // Revoke all existing refresh tokens for this user.
+        // This forces all other devices/sessions to re-login with the new password.
+        // Without this, someone who stole a refresh token could keep using it
+        // even after the legitimate user changed their password.
+        refreshTokenRepository.revokeAllByUser(user);
     }
 }

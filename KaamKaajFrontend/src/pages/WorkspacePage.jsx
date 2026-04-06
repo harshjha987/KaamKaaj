@@ -72,6 +72,13 @@ export default function WorkspacePage({ refreshInbox }) {
 
     setLoading(false)
   }
+  const handleDelete = async (task) => {
+  try {
+    await taskService.delete(workspaceId, task.id)
+    addToast(`"${task.title}" deleted`, 'info')
+    fetchTasks('ADMIN')
+  } catch (err) { addToast(extractApiError(err), 'error') }
+}
 
   const fetchTasks = async (role) => {
     try {
@@ -237,13 +244,14 @@ const load = async () => {
                     {myRole === 'MEMBER' ? 'Your assigned tasks' : `${tasks.length} task${tasks.length !== 1 ? 's' : ''} total`}
                   </span>
                 </div>
-                <TaskBoard
-                  tasks={tasks}
-                  myRole={myRole}
-                  members={members}
-                  onAssign={(task) => { setAssignTask(task); setShowAssign(true) }}
-                  onStatusUpdate={handleStatusUpdate}
-                />
+                    <TaskBoard
+                        tasks={tasks}
+                        myRole={myRole}
+                        members={members}
+                        onAssign={(task) => { setAssignTask(task); setShowAssign(true) }}
+                        onStatusUpdate={handleStatusUpdate}
+                        onDelete={handleDelete}
+                      />
               </>
             )}
             {activeTab === 1 && (

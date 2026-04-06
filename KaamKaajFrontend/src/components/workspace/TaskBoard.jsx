@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PriorityBadge } from '../ui/Badge'
 import { formatDate, getInitials, getAvatarColor } from '../../utils/helpers'
-import { UserCheck } from 'lucide-react'
+import { UserCheck, Trash2 } from 'lucide-react'
 
 const COLUMNS = [
   { key: 'NOT_STARTED', label: 'Not Started', accent: 'var(--text3)'  },
@@ -21,7 +21,7 @@ const NEXT_LABEL = {
   COMPLETED:   null,
 }
 
-export default function TaskBoard({ tasks = [], myRole, members = [], onAssign, onStatusUpdate }) {
+export default function TaskBoard({ tasks = [], myRole, members = [], onAssign, onStatusUpdate, onDelete }) {
   const grouped = COLUMNS.reduce((acc, col) => {
     acc[col.key] = tasks.filter((t) => t.status === col.key)
     return acc
@@ -59,6 +59,7 @@ export default function TaskBoard({ tasks = [], myRole, members = [], onAssign, 
               done={col.key === 'COMPLETED'}
               onAssign={onAssign}
               onStatusUpdate={onStatusUpdate}
+              onDelete={onDelete}
             />
           ))}
         </div>
@@ -67,7 +68,8 @@ export default function TaskBoard({ tasks = [], myRole, members = [], onAssign, 
   )
 }
 
-function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
+function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const nextStatus = NEXT_STATUS[task.status]
   const nextLabel  = NEXT_LABEL[task.status]
   const isAssigned = !!task.assignedToUsername
@@ -83,14 +85,68 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
         transition: 'var(--transition)',
       }}
     >
-      {/* Title */}
-      <div style={{
-        fontSize: '0.85rem', fontWeight: 500, lineHeight: 1.4,
-        marginBottom: '0.5rem',
-        textDecoration: done ? 'line-through' : 'none',
-        color: done ? 'var(--text2)' : 'var(--text)',
-      }}>
-        {task.title}
+      {/* Title row with delete button for admin */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
+        <div style={{
+          flex: 1, fontSize: '0.85rem', fontWeight: 500, lineHeight: 1.4,
+          textDecoration: done ? 'line-through' : 'none',
+          color: done ? 'var(--text2)' : 'var(--text)',
+        }}>
+          {task.title}
+        </div>
+
+        {/* Delete button — admin only, shows on hover via confirmDelete state */}
+        {myRole === 'ADMIN' && (
+          confirmDelete ? (
+            // Confirm state — two small buttons
+            <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+              <button
+                onClick={() => { onDelete?.(task); setConfirmDelete(false) }}
+                title="Confirm delete"
+                style={{
+                  fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.45rem',
+                  borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                  fontFamily: 'var(--font-body)',
+                  background: 'rgba(220,38,38,0.12)', color: '#DC2626',
+                  border: '1px solid rgba(220,38,38,0.25)',
+                  transition: 'var(--transition)',
+                }}
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                title="Cancel"
+                style={{
+                  fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.45rem',
+                  borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                  fontFamily: 'var(--font-body)',
+                  background: 'var(--bg2)', color: 'var(--text3)',
+                  border: '1px solid var(--border)',
+                  transition: 'var(--transition)',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            // Normal state — trash icon
+            <button
+              onClick={() => setConfirmDelete(true)}
+              title="Delete task"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--text3)', padding: '0.1rem',
+                display: 'flex', alignItems: 'center', flexShrink: 0,
+                transition: 'var(--transition)', borderRadius: 4,
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text3)'}
+            >
+              <Trash2 size={13} />
+            </button>
+          )
+        )}
       </div>
 
       {/* Description preview */}
@@ -120,11 +176,9 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
         </div>
       </div>
 
-      {/* ── ADMIN view ── */}
+      {/* ADMIN — assign / assigned-to button */}
       {myRole === 'ADMIN' && !done && (
         isAssigned ? (
-          // Task already has an assignee — show who it's assigned to
-          // Clicking it opens the assign modal so admin can re-assign
           <button
             onClick={() => onAssign?.(task)}
             title="Click to re-assign"
@@ -144,7 +198,6 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
             <span>Assigned to <strong>{task.assignedToUsername}</strong></span>
           </button>
         ) : (
-          // No assignee yet — show assign button
           <button
             onClick={() => onAssign?.(task)}
             style={{
@@ -163,7 +216,7 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate }) {
         )
       )}
 
-      {/* ── MEMBER view — status update button ── */}
+      {/* MEMBER — status update button */}
       {myRole === 'MEMBER' && nextLabel && (
         <button
           onClick={() => onStatusUpdate?.(task, nextStatus)}
