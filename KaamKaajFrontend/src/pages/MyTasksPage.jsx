@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate ,useSearchParams} from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CheckSquare, ExternalLink } from 'lucide-react'
 import useAuthStore from '../store/authStore'
@@ -30,10 +30,15 @@ export default function MyTasksPage() {
   const { isAuthenticated } = useAuthStore()
   const { addToast } = useToastStore()
   const navigate = useNavigate()
-
+const [searchParams] = useSearchParams()
   const [tasks, setTasks]         = useState([])
   const [loading, setLoading]     = useState(true)
-  const [filter, setFilter]       = useState('ALL')  // ALL | NOT_STARTED | IN_PROGRESS | COMPLETED
+  
+  const [filter, setFilter] = useState(() => {
+  const f = searchParams.get('filter')
+  // Validate it's a real filter value
+  return ['ALL', 'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'].includes(f) ? f : 'ALL'
+})
   const [workspaceMap, setWorkspaceMap] = useState({})  // workspaceId → workspace name
 
   if (!isAuthenticated) return <Navigate to="/auth" replace />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState ,useRef} from 'react'
 import { Navigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import { workspaceService, taskService, invitationService, assignmentService } from '../services/endpoints'
@@ -107,6 +107,7 @@ export default function DashboardPage({ refreshWorkspaces, refreshInbox }) {
   const [showCreateWs, setShowCreateWs]   = useState(false)
   const [form, setForm]     = useState({ name: '', description: '' })
   const [creating, setCreating] = useState(false)
+  const workspacesRef = useRef(null)
 
   if (!isAuthenticated) return <Navigate to="/auth" replace />
 
@@ -199,10 +200,18 @@ export default function DashboardPage({ refreshWorkspaces, refreshInbox }) {
         </div>
       </div>
 
-      <MetricsRow data={metrics} />
+      <MetricsRow
+          data={metrics}
+          onWorkspacesClick={() => {
+            workspacesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
+          onActiveClick={() => navigate('/my-tasks?filter=IN_PROGRESS')}
+          onCompletedClick={() => navigate('/my-tasks?filter=COMPLETED')}
+          onPendingClick={() => navigate('/inbox')}
+        />
 
       {/* Workspaces */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+      <div ref={workspacesRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--text)' }}>
           Your Workspaces
         </h2>

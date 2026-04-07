@@ -5,7 +5,7 @@ import { ChevronRight, Settings, LogOut } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import {
   workspaceService, taskService,
-  invitationService, assignmentService,
+  invitationService, assignmentService,messageService
 } from '../services/endpoints'
 import TaskBoard from '../components/workspace/TaskBoard'
 import MembersTable from '../components/workspace/MembersTable'
@@ -75,6 +75,8 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
   const [deleteConfirmName, setDeleteConfirmName] = useState('')
   const [deletingWs, setDeletingWs]           = useState(false)
 
+  const [unreadCount, setUnreadCount] = useState(0)
+
   // ── Leave workspace modal ─────────────────────────────────
   const [showLeaveWs, setShowLeaveWs]   = useState(false)
   const [leavingWs, setLeavingWs]       = useState(false)
@@ -95,6 +97,19 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
     } catch (_) {}
   }
 
+  const checkUnread = (msgs) => {
+  const key = `lastVisitedDiscussion_${workspaceId}`
+  const lastVisit = localStorage.getItem(key)
+  if (!lastVisit) {
+    // Never visited — all messages are "unread"
+    setUnreadCount(msgs.length)
+    return
+  }
+  const lastTime = new Date(lastVisit).getTime()
+  const unread = msgs.filter((m) => new Date(m.createdAt).getTime() > lastTime)
+  setUnreadCount(unread.length)
+}
+
   const fetchMembers = async (page = 0) => {
     try {
       const { data } = await workspaceService.getMembers(workspaceId, page)
@@ -102,6 +117,7 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
       setMemberTotalPages(data.totalPages ?? 0)
     } catch (_) { setMembers([]) }
   }
+  
 
   const fetchInvitations = async (page = 0) => {
     try {
@@ -127,6 +143,9 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
           fetchMembers(0),
           ...(role === 'ADMIN' ? [fetchInvitations(0)] : []),
         ])
+        const msgRes = await messageService.list(workspaceId, 0, 5)
+        .catch(() => ({ data: { content: [] } }))
+      checkUnread(msgRes.data.content || [])
       } catch (err) {
         addToast('Failed to load workspace', 'error')
         navigate('/dashboard')
@@ -279,6 +298,8 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
     </div>
   )
 
+  
+
   const wsIdx  = workspaceId.charCodeAt(0) % WS_GRADS.length
   const grad   = WS_GRADS[wsIdx]
   const myRole = myMembership?.role
@@ -378,23 +399,59 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{
-        display: 'flex', borderBottom: '1px solid var(--border)',
-        padding: '0 2rem', background: 'var(--bg3)',
-        gap: '0.25rem', overflowX: 'auto',
-      }}>
-        {visibleTabs.map((tab, i) => (
-          <button key={tab} onClick={() => setActiveTab(i)} style={{
-            fontSize: '0.875rem', fontWeight: activeTab === i ? 500 : 400,
-            color: activeTab === i ? 'var(--violet)' : 'var(--text2)',
-            padding: '0.75rem 1rem', cursor: 'pointer', border: 'none',
-            background: 'none', fontFamily: 'var(--font-body)',
-            borderBottom: `2px solid ${activeTab === i ? 'var(--violet)' : 'transparent'}`,
-            marginBottom: -1, transition: 'var(--transition)', whiteSpace: 'nowrap',
-          }}>{tab}</button>
-        ))}
-      </div>
+      {/* ── Tabs ── */}
+<div style={{
+  display: 'flex', borderBottom: '1px solid var(--border)',
+  padding: '0 2rem', background: 'var(--bg3)',
+  gap: '0.25rem', overflowX: 'auto',
+}}>
+  {visibleTabs.map((tab, i) => {
+    // Discussion tab index differs by role
+    const discussionIdx = myRole === 'ADMIN' ? 3 : 2
+    const isDiscussion  = i === discussionIdx
+    const showBadge     = isDiscussion && unreadCount > 0 && activeTab !== i
 
+    return (
+      <button
+        key={tab}
+        onClick={() => {
+          setActiveTab(i)
+          // Mark discussion as read when tab is opened
+          if (isDiscussion) {
+            localStorage.setItem(
+              `lastVisitedDiscussion_${workspaceId}`,
+              new Date().toISOString()
+            )
+            setUnreadCount(0)
+          }
+        }}
+        style={{
+          fontSize: '0.875rem', fontWeight: activeTab === i ? 500 : 400,
+          color: activeTab === i ? 'var(--violet)' : 'var(--text2)',
+          padding: '0.75rem 1rem', cursor: 'pointer', border: 'none',
+          background: 'none', fontFamily: 'var(--font-body)',
+          borderBottom: `2px solid ${activeTab === i ? 'var(--violet)' : 'transparent'}`,
+          marginBottom: -1, transition: 'var(--transition)', whiteSpace: 'nowrap',
+          display: 'flex', alignItems: 'center', gap: '0.4rem',
+          position: 'relative',
+        }}
+      >
+        {tab}
+        {/* Unread badge on Discussion tab */}
+        {showBadge && (
+          <span style={{
+            background: '#DC2626', color: '#fff',
+            fontSize: '0.58rem', fontWeight: 700,
+            padding: '0.1rem 0.4rem', borderRadius: 99,
+            lineHeight: 1.4, minWidth: 16, textAlign: 'center',
+          }}>
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+    )
+  })}
+</div>
       {/* ── Tab content ── */}
       <div style={{ padding: '1.5rem 2rem', maxWidth: 1200 }}>
         <AnimatePresence mode="wait">
