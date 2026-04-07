@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PriorityBadge } from '../ui/Badge'
 import { formatDate, getInitials, getAvatarColor } from '../../utils/helpers'
-import { UserCheck, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { UserCheck, Trash2, AlertTriangle, CheckCircle2,Pencil  } from 'lucide-react'
 
 const COLUMNS = [
   { key: 'NOT_STARTED', label: 'Not Started', accent: 'var(--text3)'  },
@@ -68,7 +68,7 @@ export default function TaskBoard({ tasks = [], myRole, members = [], onAssign, 
   )
 }
 
-function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
+function TaskCard({task, myRole, done, onAssign, onStatusUpdate, onDelete, onEdit  }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const nextStatus  = NEXT_STATUS[task.status]
   const nextLabel   = NEXT_LABEL[task.status]
@@ -100,51 +100,41 @@ function TaskCard({ task, myRole, done, onAssign, onStatusUpdate, onDelete }) {
           {task.title}
         </div>
 
-        {myRole === 'ADMIN' && (
-          confirmDelete ? (
-            <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
-              <button
-                onClick={() => { onDelete?.(task); setConfirmDelete(false) }}
-                style={{
-                  fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.45rem',
-                  borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                  fontFamily: 'var(--font-body)',
-                  background: 'rgba(220,38,38,0.12)', color: '#DC2626',
-                  border: '1px solid rgba(220,38,38,0.25)',
-                }}
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                style={{
-                  fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.45rem',
-                  borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                  fontFamily: 'var(--font-body)',
-                  background: 'var(--bg2)', color: 'var(--text3)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              title="Delete task"
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: 'var(--text3)', padding: '0.1rem',
-                display: 'flex', alignItems: 'center', flexShrink: 0,
-                transition: 'var(--transition)', borderRadius: 4,
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text3)'}
-            >
-              <Trash2 size={13} />
-            </button>
-          )
-        )}
+        {myRole === 'ADMIN' && !confirmDelete && (
+  <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+    {/* Edit button */}
+    <button
+      onClick={() => onEdit?.(task)}
+      title="Edit task"
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        color: 'var(--text3)', padding: '0.1rem',
+        display: 'flex', alignItems: 'center',
+        transition: 'var(--transition)', borderRadius: 4,
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--violet)'}
+      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text3)'}
+    >
+      <Pencil size={12} />
+    </button>
+
+    {/* Trash button */}
+    <button
+      onClick={() => setConfirmDelete(true)}
+      title="Delete task"
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        color: 'var(--text3)', padding: '0.1rem',
+        display: 'flex', alignItems: 'center',
+        transition: 'var(--transition)', borderRadius: 4,
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
+      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text3)'}
+    >
+      <Trash2 size={12} />
+    </button>
+  </div>
+)}
       </div>
 
       {/* Description */}

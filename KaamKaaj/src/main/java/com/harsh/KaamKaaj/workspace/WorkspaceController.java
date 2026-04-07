@@ -115,4 +115,35 @@ public class WorkspaceController {
         return ResponseEntity.ok(
                 workspaceService.changeMemberRole(workspaceId, userId, request, authentication));
     }
+
+    // ── Delete workspace (admin only) ─────────────────────────
+    @Operation(summary = "Delete workspace — admin only. Irreversible.")
+    @DeleteMapping("/{workspaceId}")
+    public ResponseEntity<Void> deleteWorkspace(
+            @PathVariable String workspaceId,
+            Authentication authentication) {
+        workspaceService.deleteWorkspace(workspaceId, authentication);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Edit workspace (admin only) ───────────────────────────
+    @Operation(summary = "Update workspace name and description — admin only.")
+    @PatchMapping("/{workspaceId}")
+    public ResponseEntity<WorkspaceResponse> updateWorkspace(
+            @PathVariable String workspaceId,
+            @Valid @RequestBody UpdateWorkspaceRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(
+                workspaceService.updateWorkspace(workspaceId, request, authentication));
+    }
+
+    // ── Leave workspace (member only) ─────────────────────────
+    @Operation(summary = "Leave a workspace. Admins must transfer ownership first.")
+    @DeleteMapping("/{workspaceId}/members/me")
+    public ResponseEntity<Void> leaveWorkspace(
+            @PathVariable String workspaceId,
+            Authentication authentication) {
+        workspaceService.leaveWorkspace(workspaceId, authentication);
+        return ResponseEntity.noContent().build();
+    }
 }

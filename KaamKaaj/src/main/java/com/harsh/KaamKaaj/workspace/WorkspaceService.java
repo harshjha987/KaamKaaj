@@ -1,6 +1,7 @@
 package com.harsh.KaamKaaj.workspace;
 
 import com.harsh.KaamKaaj.exception.DuplicateResourceException;
+import com.harsh.KaamKaaj.exception.InvalidStatusTransitionException;
 import com.harsh.KaamKaaj.exception.ResourceNotFoundException;
 import com.harsh.KaamKaaj.exception.WorkspaceAccessDeniedException;
 import com.harsh.KaamKaaj.model.UserPrincipal;
@@ -197,5 +198,66 @@ public class WorkspaceService {
         WorkspaceMember saved = memberRepository.save(targetMember);
 
         return workspaceMapper.toMemberResponse(saved);
+    }
+
+    // ── Delete workspace ──────────────────────────────────────
+    @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
+    @Transactional
+    public void deleteWorkspace(String workspaceId, Authentication authentication) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Workspace not found: " + workspaceId));
+
+        // Deleting the workspace cascades to:
+        // members, invitations, tasks, assignments, messages
+        // Make sure your entities have CascadeType.ALL or orphanRemoval
+        // on the workspace side, or use repository deletes here.
+        workspaceRepository.delete(workspace);
+    }
+
+    // ── Update workspace ──────────────────────────────────────
+    @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
+    @Transactional
+    public WorkspaceResponse updateWorkspace(String workspaceId,
+                                             UpdateWorkspaceRequest request,
+                                             Authentication authentication) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Workspace not found: " + workspaceId));
+
+        workspace.setName(request.getName().trim());
+        if (request.getDescription() != null) {
+            workspace.setDescription(request.getDescription().trim());
+        }
+
+        return workspaceMapper.toWorkspaceResponse(workspaceRepository.save(workspace));
+    }
+
+    // ── Leave workspace ───────────────────────────────────────
+    @Transactional
+    public void leaveWorkspace(String workspaceId, Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+        WorkspaceMember member = memberRepository
+                .findByWorkspaceIdAndUserId(workspaceId, principal.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "You are not a member of this workspace"));
+
+        // Admins cannot leave if they are the last admin.
+        // They must promote someone else first.
+        if (member.getRole() == WorkspaceRole.ADMIN) {
+            long adminCount = memberRepository
+                    .findByWorkspaceIdAndStatus(workspaceId, MemberStatus.ACTIVE)
+                    .stream()
+                    .filter(m -> m.getRole() == WorkspaceRole.ADMIN)
+                    .count();
+
+            if (adminCount <= 1) {
+                throw new InvalidStatusTransitionException(
+                        "You are the only admin. Promote another member to admin before leaving.");
+            }
+        }
+
+        memberRepository.delete(member);
     }
 }

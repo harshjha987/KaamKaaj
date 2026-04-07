@@ -18,14 +18,16 @@ export const workspaceService = {
   create:          (data) => api.post('/workspaces', data),
   list:            () => api.get('/workspaces'),
   get:             (workspaceId) => api.get(`/workspaces/${workspaceId}`),
+  update:          (workspaceId, data) => api.patch(`/workspaces/${workspaceId}`, data),
+  delete:          (workspaceId) => api.delete(`/workspaces/${workspaceId}`),
   getMembers:      (workspaceId, page = 0, size = 20) =>
     api.get(`/workspaces/${workspaceId}/members`, { params: { page, size } }),
-  getMyMembership: (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}/members/me`),
+  getMyMembership: (workspaceId) => api.get(`/workspaces/${workspaceId}/members/me`),
   removeMember:    (workspaceId, userId) =>
     api.delete(`/workspaces/${workspaceId}/members/${userId}`),
   changeMemberRole:(workspaceId, userId, role) =>
     api.patch(`/workspaces/${workspaceId}/members/${userId}/role`, { role }),
+  leave:           (workspaceId) => api.delete(`/workspaces/${workspaceId}/members/me`),
 }
 
 export const invitationService = {
@@ -41,23 +43,21 @@ export const invitationService = {
 }
 
 export const taskService = {
-  // page and size now supported
-  list:         (workspaceId, page = 0, size = 10) =>
-    api.get(`/workspaces/${workspaceId}/tasks`, { params: { page, size } }),
-  myTasks:      (workspaceId) =>
-    api.get(`/workspaces/${workspaceId}/me/tasks`),
-  get:          (workspaceId, taskId) =>
-    api.get(`/workspaces/${workspaceId}/tasks/${taskId}`),
   create:       (workspaceId, data) =>
     api.post(`/workspaces/${workspaceId}/tasks`, data),
+  list:         (workspaceId, page = 0, size = 10) =>
+    api.get(`/workspaces/${workspaceId}/tasks`, { params: { page, size } }),
+  get:          (workspaceId, taskId) =>
+    api.get(`/workspaces/${workspaceId}/tasks/${taskId}`),
   update:       (workspaceId, taskId, data) =>
     api.put(`/workspaces/${workspaceId}/tasks/${taskId}`, data),
   delete:       (workspaceId, taskId) =>
     api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`),
+  myTasks:      (workspaceId) =>
+    api.get(`/workspaces/${workspaceId}/me/tasks`),
   updateStatus: (workspaceId, taskId, status) =>
     api.patch(`/workspaces/${workspaceId}/tasks/${taskId}/status`, { status }),
 }
-
 export const assignmentService = {
   create:    (workspaceId, taskId, assigneeId) => api.post(`/workspaces/${workspaceId}/tasks/${taskId}/assignments`, { assigneeId }),
   history:   (workspaceId, taskId) => api.get(`/workspaces/${workspaceId}/tasks/${taskId}/assignments`),
