@@ -34,7 +34,7 @@ public class TaskController {
                 .body(taskService.createTask(workspaceId, request, authentication));
     }
 
-    @GetMapping
+    @GetMapping("/api/v1/workspaces/{workspaceId}/tasks")
     @Operation(summary = "List all tasks in workspace (paginated)")
     public ResponseEntity<Page<TaskResponse>> getWorkspaceTasks(
             @PathVariable String workspaceId,

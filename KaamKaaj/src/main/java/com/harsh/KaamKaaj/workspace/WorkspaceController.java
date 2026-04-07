@@ -1,9 +1,6 @@
 package com.harsh.KaamKaaj.workspace;
 
-import com.harsh.KaamKaaj.workspace.dto.ChangeRoleRequest;
-import com.harsh.KaamKaaj.workspace.dto.CreateWorkspaceRequest;
-import com.harsh.KaamKaaj.workspace.dto.MemberResponse;
-import com.harsh.KaamKaaj.workspace.dto.WorkspaceResponse;
+import com.harsh.KaamKaaj.workspace.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

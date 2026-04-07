@@ -7,10 +7,7 @@ import com.harsh.KaamKaaj.exception.WorkspaceAccessDeniedException;
 import com.harsh.KaamKaaj.model.UserPrincipal;
 import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.user.UserRepo;
-import com.harsh.KaamKaaj.workspace.dto.ChangeRoleRequest;
-import com.harsh.KaamKaaj.workspace.dto.CreateWorkspaceRequest;
-import com.harsh.KaamKaaj.workspace.dto.MemberResponse;
-import com.harsh.KaamKaaj.workspace.dto.WorkspaceResponse;
+import com.harsh.KaamKaaj.workspace.dto.*;
 import com.harsh.KaamKaaj.workspace.mapper.WorkspaceMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -230,7 +227,7 @@ public class WorkspaceService {
             workspace.setDescription(request.getDescription().trim());
         }
 
-        return workspaceMapper.toWorkspaceResponse(workspaceRepository.save(workspace));
+        return workspaceMapper.toResponse(workspaceRepository.save(workspace));
     }
 
     // ── Leave workspace ───────────────────────────────────────

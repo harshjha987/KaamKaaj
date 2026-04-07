@@ -457,10 +457,11 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
                     )}
                   </div>
                 ) : (
-                  <TaskBoard
+                 <TaskBoard
                     tasks={tasks}
                     myRole={myRole}
                     members={members}
+                    workspaceId={workspaceId}
                     onAssign={(task) => { setAssignTask(task); setShowAssign(true) }}
                     onEdit={openEditTask}
                     onStatusUpdate={handleStatusUpdate}
