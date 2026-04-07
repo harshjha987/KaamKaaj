@@ -16,6 +16,7 @@ import Button from '../components/ui/Button'
 import { Input, Textarea, Select } from '../components/ui/Input'
 import useToastStore from '../store/toastStore'
 import { extractApiError, getInitials } from '../utils/helpers'
+import DiscussionBoard from '../components/workspace/DiscussionBoard'
 
 const WS_GRADS = [
   'linear-gradient(135deg,#7C3AED,#06B6D4)',
@@ -208,8 +209,8 @@ export default function WorkspacePage({ refreshInbox }) {
 
   // Tabs — members only see Tasks + Members, not Invitations
   const visibleTabs = myRole === 'ADMIN'
-    ? ['Tasks Board', 'Members', 'Invitations']
-    : ['Tasks Board', 'Members']
+  ? ['Tasks Board', 'Members', 'Invitations', 'Discussion']
+  : ['Tasks Board', 'Members', 'Discussion']
 
   return (
     <div>
@@ -426,6 +427,12 @@ export default function WorkspacePage({ refreshInbox }) {
                   onPageChange={(p) => { setInvPage(p); fetchInvitations(p) }}
                 />
               </>
+            )}
+
+            {/* ── Discussion tab ── */}
+            {((myRole === 'ADMIN' && activeTab === 3) ||
+              (myRole === 'MEMBER' && activeTab === 2)) && (
+              <DiscussionBoard workspaceId={workspaceId} myRole={myRole} />
             )}
 
           </motion.div>

@@ -66,3 +66,21 @@ export const assignmentService = {
   accept:    (assignmentId) => api.post(`/me/assignments/${assignmentId}/accept`),
   decline:   (assignmentId) => api.post(`/me/assignments/${assignmentId}/decline`),
 }
+
+export const messageService = {
+  // GET paginated top-level posts with embedded replies
+  list:   (workspaceId, page = 0, size = 15) =>
+    api.get(`/workspaces/${workspaceId}/messages`, { params: { page, size } }),
+
+  // POST new top-level message
+  post:   (workspaceId, content) =>
+    api.post(`/workspaces/${workspaceId}/messages`, { content }),
+
+  // POST reply to a message
+  reply:  (workspaceId, messageId, content) =>
+    api.post(`/workspaces/${workspaceId}/messages/${messageId}/reply`, { content }),
+
+  // DELETE a message
+  delete: (workspaceId, messageId) =>
+    api.delete(`/workspaces/${workspaceId}/messages/${messageId}`),
+}
