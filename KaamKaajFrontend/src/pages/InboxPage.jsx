@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Inbox } from 'lucide-react'
+import { Inbox, RefreshCw } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import { invitationService, assignmentService } from '../services/endpoints'
 import useToastStore from '../store/toastStore'
@@ -13,15 +13,17 @@ export default function InboxPage({ refreshInbox }) {
   const { isAuthenticated } = useAuthStore()
   const { addToast } = useToastStore()
 
-  const [invitations, setInvitations]   = useState([])
-  const [assignments, setAssignments]   = useState([])
-  const [loading, setLoading]           = useState(true)
-  const [filter, setFilter]             = useState('All')
+  const [invitations, setInvitations] = useState([])
+  const [assignments, setAssignments] = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [refreshing, setRefreshing]   = useState(false)
+  const [filter, setFilter]           = useState('All')
 
   if (!isAuthenticated) return <Navigate to="/auth" replace />
 
-  const fetchInbox = async () => {
-    setLoading(true)
+  const fetchInbox = async (silent = false) => {
+    if (silent) setRefreshing(true)
+    else setLoading(true)
     try {
       const [inv, asgn] = await Promise.all([
         invitationService.myPending().catch(() => ({ data: [] })),
@@ -31,6 +33,7 @@ export default function InboxPage({ refreshInbox }) {
       setAssignments(asgn.data || [])
     } catch (_) {}
     setLoading(false)
+    setRefreshing(false)
   }
 
   useEffect(() => { fetchInbox() }, [])
@@ -40,7 +43,7 @@ export default function InboxPage({ refreshInbox }) {
       if (accept) await invitationService.accept(id)
       else        await invitationService.decline(id)
       addToast(accept ? 'Invitation accepted!' : 'Invitation declined', accept ? 'success' : 'info')
-      fetchInbox()
+      fetchInbox(true)
       refreshInbox?.()
     } catch (err) { addToast(extractApiError(err), 'error') }
   }
@@ -50,7 +53,7 @@ export default function InboxPage({ refreshInbox }) {
       if (accept) await assignmentService.accept(id)
       else        await assignmentService.decline(id)
       addToast(accept ? 'Assignment accepted!' : 'Assignment declined', accept ? 'success' : 'info')
-      fetchInbox()
+      fetchInbox(true)
       refreshInbox?.()
     } catch (err) { addToast(extractApiError(err), 'error') }
   }
@@ -70,28 +73,65 @@ export default function InboxPage({ refreshInbox }) {
 
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-sm)',
-            background: 'var(--violet-alpha)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Inbox size={18} color="var(--violet)" />
+        <div style={{
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', marginBottom: '0.35rem',
+        }}>
+          {/* Left — icon + title + count */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 'var(--radius-sm)',
+              background: 'var(--violet-alpha)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Inbox size={18} color="var(--violet)" />
+            </div>
+            <h1 style={{
+              fontFamily: 'var(--font-display)', fontSize: '1.6rem',
+              fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)',
+            }}>
+              Inbox
+            </h1>
+            {total > 0 && (
+              <span style={{
+                background: 'var(--violet)', color: '#fff',
+                fontSize: '0.72rem', fontWeight: 600,
+                padding: '0.15rem 0.55rem', borderRadius: 99,
+              }}>{total}</span>
+            )}
           </div>
-          <h1 style={{
-            fontFamily: 'var(--font-display)', fontSize: '1.6rem',
-            fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)',
-          }}>
-            Inbox
-          </h1>
-          {total > 0 && (
-            <span style={{
-              background: 'var(--violet)', color: '#fff',
-              fontSize: '0.72rem', fontWeight: 600,
-              padding: '0.15rem 0.55rem', borderRadius: 99,
-            }}>{total}</span>
-          )}
+
+          {/* Right — refresh button */}
+          <button
+            onClick={() => fetchInbox(true)}
+            disabled={refreshing}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.35rem',
+              fontSize: '0.78rem', color: 'var(--text3)',
+              background: 'var(--bg3)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: '0.4rem 0.85rem',
+              cursor: refreshing ? 'not-allowed' : 'pointer',
+              fontFamily: 'var(--font-body)', transition: 'var(--transition)',
+            }}
+            onMouseEnter={(e) => {
+              if (!refreshing) {
+                e.currentTarget.style.borderColor = 'var(--violet)'
+                e.currentTarget.style.color = 'var(--violet)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border)'
+              e.currentTarget.style.color = 'var(--text3)'
+            }}
+          >
+            <RefreshCw
+              size={13}
+              style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }}
+            />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
+
         <p style={{ fontSize: '0.875rem', color: 'var(--text2)', marginLeft: '3rem' }}>
           Pending workspace invitations and task assignments
         </p>
@@ -163,7 +203,10 @@ export default function InboxPage({ refreshInbox }) {
       {!loading && visibleInvitations.length > 0 && (
         <div style={{ marginBottom: '1.5rem' }}>
           {filter === 'All' && (
-            <div style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text3)', marginBottom: '0.75rem' }}>
+            <div style={{
+              fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.06em',
+              textTransform: 'uppercase', color: 'var(--text3)', marginBottom: '0.75rem',
+            }}>
               Workspace Invitations
             </div>
           )}
@@ -175,10 +218,8 @@ export default function InboxPage({ refreshInbox }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: idx * 0.05 }}
                 style={{
-                  background: 'var(--bg3)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  padding: '1rem 1.25rem',
+                  background: 'var(--bg3)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)', padding: '1rem 1.25rem',
                   transition: 'var(--transition)',
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border2)'}
@@ -211,8 +252,7 @@ export default function InboxPage({ refreshInbox }) {
                         borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                         fontWeight: 500, fontFamily: 'var(--font-body)',
                         background: 'rgba(22,163,74,0.1)', color: '#16A34A',
-                        border: '1px solid rgba(22,163,74,0.2)',
-                        transition: 'var(--transition)',
+                        border: '1px solid rgba(22,163,74,0.2)', transition: 'var(--transition)',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}
@@ -226,8 +266,7 @@ export default function InboxPage({ refreshInbox }) {
                         borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                         fontWeight: 500, fontFamily: 'var(--font-body)',
                         background: 'rgba(220,38,38,0.08)', color: '#DC2626',
-                        border: '1px solid rgba(220,38,38,0.15)',
-                        transition: 'var(--transition)',
+                        border: '1px solid rgba(220,38,38,0.15)', transition: 'var(--transition)',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.15)'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.08)'}
@@ -246,7 +285,10 @@ export default function InboxPage({ refreshInbox }) {
       {!loading && visibleAssignments.length > 0 && (
         <div>
           {filter === 'All' && (
-            <div style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text3)', marginBottom: '0.75rem' }}>
+            <div style={{
+              fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.06em',
+              textTransform: 'uppercase', color: 'var(--text3)', marginBottom: '0.75rem',
+            }}>
               Task Assignments
             </div>
           )}
@@ -258,10 +300,8 @@ export default function InboxPage({ refreshInbox }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: idx * 0.05 }}
                 style={{
-                  background: 'var(--bg3)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  padding: '1rem 1.25rem',
+                  background: 'var(--bg3)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)', padding: '1rem 1.25rem',
                   transition: 'var(--transition)',
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border2)'}
@@ -294,8 +334,7 @@ export default function InboxPage({ refreshInbox }) {
                         borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                         fontWeight: 500, fontFamily: 'var(--font-body)',
                         background: 'rgba(22,163,74,0.1)', color: '#16A34A',
-                        border: '1px solid rgba(22,163,74,0.2)',
-                        transition: 'var(--transition)',
+                        border: '1px solid rgba(22,163,74,0.2)', transition: 'var(--transition)',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.18)'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(22,163,74,0.1)'}
@@ -309,8 +348,7 @@ export default function InboxPage({ refreshInbox }) {
                         borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                         fontWeight: 500, fontFamily: 'var(--font-body)',
                         background: 'rgba(220,38,38,0.08)', color: '#DC2626',
-                        border: '1px solid rgba(220,38,38,0.15)',
-                        transition: 'var(--transition)',
+                        border: '1px solid rgba(220,38,38,0.15)', transition: 'var(--transition)',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.15)'}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220,38,38,0.08)'}

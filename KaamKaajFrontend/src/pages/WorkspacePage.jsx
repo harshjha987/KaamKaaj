@@ -726,18 +726,52 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
             fontSize: '0.82rem', color: '#F59E0B',
           }}>
             ⚠ As an admin, you can only leave if there is at least one other admin.
+            Promote a member before leaving.
           </div>
         )}
+        {/* Last member warning */}
+      {members.length === 1 && (
+        <div style={{
+          background: 'rgba(220,38,38,0.06)',
+          border: '1px solid rgba(220,38,38,0.15)',
+          borderRadius: 'var(--radius-sm)', padding: '0.85rem 1rem',
+          marginBottom: '1rem', fontSize: '0.82rem', color: '#DC2626',
+        }}>
+          ⚠ You are the only member. Leaving will make this workspace empty
+          with no admin — consider deleting it instead.
+        </div>
+      )}
+          <div style={{ fontSize: '0.875rem', color: 'var(--text2)', lineHeight: 1.6, marginBottom: '0.5rem' }}>
+        You will lose access to all tasks, discussions and workspace data.
+        This cannot be undone.
+      </div>
         <ModalFooter>
-          <Button variant="ghost" size="sm" onClick={() => setShowLeaveWs(false)}>Cancel</Button>
+        <Button variant="ghost" size="sm" onClick={() => setShowLeaveWs(false)}>
+          Cancel
+        </Button>
+        {/* Show delete instead of leave if last member */}
+        {members.length === 1 ? (
           <Button
             size="sm"
-            loading={leavingWs}
-            onClick={handleLeaveWs}
+            onClick={() => {
+              setShowLeaveWs(false)
+              setDeleteConfirmName('')
+              setShowDeleteWs(true)
+            }}
             style={{ background: '#DC2626', color: '#fff', border: 'none' }}
           >
-            Leave workspace
+            Delete workspace instead
           </Button>
+          ) : (
+      <Button
+        size="sm"
+        loading={leavingWs}
+        onClick={handleLeaveWs}
+        style={{ background: '#DC2626', color: '#fff', border: 'none' }}
+      >
+        Leave workspace
+      </Button>
+          )}
         </ModalFooter>
       </Modal>
 

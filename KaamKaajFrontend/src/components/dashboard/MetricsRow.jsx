@@ -56,6 +56,7 @@ export default function MetricsRow({ data = {}, onWorkspacesClick, onActiveClick
           key={key}
           onClick={onClick}
           title={hint}
+          className="metric-card"
           style={{
             background: 'var(--bg3)', border: '1px solid var(--border)',
             borderRadius: 'var(--radius)', padding: '1.25rem',

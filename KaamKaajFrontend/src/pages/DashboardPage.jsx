@@ -1,5 +1,5 @@
 import React, { useEffect, useState ,useRef} from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate,useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import { workspaceService, taskService, invitationService, assignmentService } from '../services/endpoints'
 import { getGreeting, formatDate } from '../utils/helpers'
@@ -11,6 +11,7 @@ import Button from '../components/ui/Button'
 import { Input, Textarea } from '../components/ui/Input'
 import useToastStore from '../store/toastStore'
 import { extractApiError } from '../utils/helpers'
+import { WorkspaceCardSkeleton, MetricCardSkeleton, InboxItemSkeleton } from '../components/ui/Skeleton'
 
 // Build activity feed from the data we already have
 function buildActivityFeed(workspaces, memberships, allTasks, invitations, assignments) {
@@ -108,6 +109,7 @@ export default function DashboardPage({ refreshWorkspaces, refreshInbox }) {
   const [form, setForm]     = useState({ name: '', description: '' })
   const [creating, setCreating] = useState(false)
   const workspacesRef = useRef(null)
+  const navigate = useNavigate();
 
   if (!isAuthenticated) return <Navigate to="/auth" replace />
 
@@ -200,7 +202,7 @@ export default function DashboardPage({ refreshWorkspaces, refreshInbox }) {
         </div>
       </div>
 
-      <MetricsRow
+      {/* <MetricsRow
           data={metrics}
           onWorkspacesClick={() => {
             workspacesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -208,7 +210,25 @@ export default function DashboardPage({ refreshWorkspaces, refreshInbox }) {
           onActiveClick={() => navigate('/my-tasks?filter=IN_PROGRESS')}
           onCompletedClick={() => navigate('/my-tasks?filter=COMPLETED')}
           onPendingClick={() => navigate('/inbox')}
-        />
+        /> */}
+        {loading ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1rem', marginBottom: '2rem',
+          }}>
+            {[1,2,3,4].map((i) => <MetricCardSkeleton key={i} />)}
+          </div>
+        ) : (
+          <MetricsRow
+            data={metrics}
+            onWorkspacesClick={() => {
+            workspacesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}}
+            onActiveClick={() => navigate('/my-tasks?filter=IN_PROGRESS')}
+          onCompletedClick={() => navigate('/my-tasks?filter=COMPLETED')}
+          onPendingClick={() => navigate('/inbox')}
+          />
+        )}
 
       {/* Workspaces */}
       <div ref={workspacesRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -218,10 +238,21 @@ export default function DashboardPage({ refreshWorkspaces, refreshInbox }) {
         <Button variant="primary" size="sm" onClick={() => setShowCreateWs(true)}>+ New workspace</Button>
       </div>
 
-      {loading
+      {/* {loading
         ? <div style={{ fontSize: '0.875rem', color: 'var(--text3)', padding: '2rem 0' }}>Loading...</div>
         : <WorkspaceGrid workspaces={workspaces} myMemberships={myMemberships} onNew={() => setShowCreateWs(true)} />
-      }
+      } */}
+      {loading ? (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '1rem', marginBottom: '1.5rem',
+        }}>
+          {[1,2,3].map((i) => <WorkspaceCardSkeleton key={i} />)}
+        </div>
+      ) : (
+        <WorkspaceGrid workspaces={workspaces} myMemberships={myMemberships} onNew={() => setShowCreateWs(true)}  />
+      )}
 
       {/* Activity + Inbox — responsive two col */}
 <div style={{

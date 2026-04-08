@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { Navigate, useNavigate ,useSearchParams} from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CheckSquare, ExternalLink } from 'lucide-react'
+import { CheckSquare, ExternalLink, RefreshCw } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import { workspaceService, taskService } from '../services/endpoints'
 import { PriorityBadge } from '../components/ui/Badge'
@@ -28,51 +28,50 @@ const NEXT_LABEL = {
 
 export default function MyTasksPage() {
   const { isAuthenticated } = useAuthStore()
-  const { addToast } = useToastStore()
-  const navigate = useNavigate()
-const [searchParams] = useSearchParams()
-  const [tasks, setTasks]         = useState([])
-  const [loading, setLoading]     = useState(true)
-  
+  const { addToast }        = useToastStore()
+  const navigate            = useNavigate()
+  const [searchParams]      = useSearchParams()
+
+  const [tasks, setTasks]           = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [workspaceMap, setWorkspaceMap] = useState({})
+
+  // Pre-select filter from URL param — e.g. /my-tasks?filter=IN_PROGRESS
   const [filter, setFilter] = useState(() => {
-  const f = searchParams.get('filter')
-  // Validate it's a real filter value
-  return ['ALL', 'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'].includes(f) ? f : 'ALL'
-})
-  const [workspaceMap, setWorkspaceMap] = useState({})  // workspaceId → workspace name
+    const f = searchParams.get('filter')
+    return ['ALL', 'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'].includes(f) ? f : 'ALL'
+  })
 
   if (!isAuthenticated) return <Navigate to="/auth" replace />
 
-  const fetchAll = async () => {
-    setLoading(true)
+  const fetchAll = async (silent = false) => {
+    if (silent) setRefreshing(true)
+    else setLoading(true)
     try {
-      // Get all workspaces the user belongs to
       const { data: workspaces } = await workspaceService.list()
 
-      // Build a map of workspaceId → name for display
       const wsMap = {}
       workspaces.forEach((ws) => { wsMap[ws.id] = ws.name })
       setWorkspaceMap(wsMap)
 
-      // Fetch accepted tasks from every workspace in parallel
       const results = await Promise.all(
         workspaces.map((ws) =>
           taskService.myTasks(ws.id).catch(() => ({ data: [] }))
         )
       )
 
-      // Flatten all tasks into one list, tagging each with workspaceId
       const allTasks = results.flatMap((res, i) =>
         (res.data || []).map((t) => ({ ...t, workspaceId: workspaces[i].id }))
       )
 
-      // Sort: in-progress first, then not started, then completed
       const ORDER = { IN_PROGRESS: 0, NOT_STARTED: 1, COMPLETED: 2 }
       allTasks.sort((a, b) => (ORDER[a.status] ?? 3) - (ORDER[b.status] ?? 3))
 
       setTasks(allTasks)
     } catch (_) {}
     setLoading(false)
+    setRefreshing(false)
   }
 
   useEffect(() => { fetchAll() }, [])
@@ -81,7 +80,7 @@ const [searchParams] = useSearchParams()
     try {
       await taskService.updateStatus(task.workspaceId, task.id, newStatus)
       addToast('Status updated!', 'success')
-      fetchAll()
+      fetchAll(true)
     } catch (err) { addToast(extractApiError(err), 'error') }
   }
 
@@ -97,10 +96,10 @@ const [searchParams] = useSearchParams()
   }
 
   const FILTERS = [
-    { key: 'ALL',         label: 'All tasks'    },
-    { key: 'IN_PROGRESS', label: 'In progress'  },
-    { key: 'NOT_STARTED', label: 'Not started'  },
-    { key: 'COMPLETED',   label: 'Completed'    },
+    { key: 'ALL',         label: 'All tasks'   },
+    { key: 'IN_PROGRESS', label: 'In progress' },
+    { key: 'NOT_STARTED', label: 'Not started' },
+    { key: 'COMPLETED',   label: 'Completed'   },
   ]
 
   return (
@@ -108,21 +107,66 @@ const [searchParams] = useSearchParams()
 
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-sm)',
-            background: 'var(--violet-alpha)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <CheckSquare size={18} color="var(--violet)" />
+        <div style={{
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', marginBottom: '0.35rem',
+        }}>
+          {/* Left — icon + title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 'var(--radius-sm)',
+              background: 'var(--violet-alpha)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <CheckSquare size={18} color="var(--violet)" />
+            </div>
+            <h1 style={{
+              fontFamily: 'var(--font-display)', fontSize: '1.6rem',
+              fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)',
+            }}>
+              My Tasks
+            </h1>
+            {tasks.length > 0 && (
+              <span style={{
+                background: 'var(--bg2)', color: 'var(--text3)',
+                fontSize: '0.72rem', fontWeight: 600,
+                padding: '0.15rem 0.55rem', borderRadius: 99,
+                border: '1px solid var(--border)',
+              }}>{tasks.length}</span>
+            )}
           </div>
-          <h1 style={{
-            fontFamily: 'var(--font-display)', fontSize: '1.6rem',
-            fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)',
-          }}>
-            My Tasks
-          </h1>
+
+          {/* Right — refresh button */}
+          <button
+            onClick={() => fetchAll(true)}
+            disabled={refreshing}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.35rem',
+              fontSize: '0.78rem', color: 'var(--text3)',
+              background: 'var(--bg3)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)', padding: '0.4rem 0.85rem',
+              cursor: refreshing ? 'not-allowed' : 'pointer',
+              fontFamily: 'var(--font-body)', transition: 'var(--transition)',
+            }}
+            onMouseEnter={(e) => {
+              if (!refreshing) {
+                e.currentTarget.style.borderColor = 'var(--violet)'
+                e.currentTarget.style.color = 'var(--violet)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border)'
+              e.currentTarget.style.color = 'var(--text3)'
+            }}
+          >
+            <RefreshCw
+              size={13}
+              style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }}
+            />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
+
         <p style={{ fontSize: '0.875rem', color: 'var(--text2)', marginLeft: '3rem' }}>
           All tasks assigned to you across your workspaces
         </p>
@@ -200,7 +244,7 @@ const [searchParams] = useSearchParams()
       {/* Task list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {filtered.map((task, idx) => {
-          const meta      = STATUS_META[task.status]
+          const meta       = STATUS_META[task.status]
           const nextStatus = NEXT_STATUS[task.status]
           const nextLabel  = NEXT_LABEL[task.status]
           const wsName     = workspaceMap[task.workspaceId] || 'Workspace'
@@ -234,8 +278,11 @@ const [searchParams] = useSearchParams()
                 {/* Main content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
 
-                  {/* Title + workspace */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
+                  {/* Title + workspace chip */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    marginBottom: '0.3rem', flexWrap: 'wrap',
+                  }}>
                     <span style={{
                       fontSize: '0.92rem', fontWeight: 500,
                       color: isDone ? 'var(--text2)' : 'var(--text)',
@@ -244,7 +291,6 @@ const [searchParams] = useSearchParams()
                       {task.title}
                     </span>
 
-                    {/* Workspace chip — clicking goes to that workspace */}
                     <button
                       onClick={() => navigate(`/workspace/${task.workspaceId}`)}
                       title="Open workspace"
@@ -272,7 +318,7 @@ const [searchParams] = useSearchParams()
                     </div>
                   )}
 
-                  {/* Meta row — priority, due date, assigned by */}
+                  {/* Meta row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <PriorityBadge priority={task.priority} />
 
@@ -300,9 +346,11 @@ const [searchParams] = useSearchParams()
                   </div>
                 </div>
 
-                {/* Right side — status badge + action button */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
-                  {/* Status badge */}
+                {/* Right — status badge + action button */}
+                <div style={{
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0,
+                }}>
                   <span style={{
                     fontSize: '0.68rem', fontWeight: 600,
                     padding: '0.2rem 0.6rem', borderRadius: 99,
@@ -313,7 +361,6 @@ const [searchParams] = useSearchParams()
                     {meta.label}
                   </span>
 
-                  {/* Status update button */}
                   {nextLabel && (
                     <button
                       onClick={() => handleStatusUpdate(task, nextStatus)}
