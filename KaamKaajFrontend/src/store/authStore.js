@@ -2,25 +2,37 @@ import { create } from 'zustand'
 import { authService } from '../services/endpoints'
 
 const useAuthStore = create((set, get) => ({
-  user: JSON.parse(localStorage.getItem('kk-user') || 'null'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
-  loading: false,
-  error: null,
+  // No tokens in state — they live in HttpOnly cookies
+  // User info kept in memory only — re-fetched on app start
+  user:            null,
+  isAuthenticated: false,
+  loading:         false,
+  error:           null,
+
+  // Called once on app start in main.jsx
+  // Hits /auth/me — if the cookie is valid, returns user info
+  // If not, user is not authenticated
+  checkAuth: async () => {
+    try {
+      const { data } = await authService.me()
+      set({ user: data, isAuthenticated: true })
+    } catch {
+      set({ user: null, isAuthenticated: false })
+    }
+  },
 
   login: async (email, password) => {
     set({ loading: true, error: null })
     try {
+      // Backend sets HttpOnly accessToken + refreshToken cookies
+      // Response body only contains user info
       const { data } = await authService.login({ email, password })
-      localStorage.setItem('accessToken', data.accessToken)
-      localStorage.setItem('refreshToken', data.refreshToken)
-
-      // Fetch full profile
-      const { data: profile } = await authService.me()
-      localStorage.setItem('kk-user', JSON.stringify(profile))
-      set({ user: profile, isAuthenticated: true, loading: false })
+      set({ user: data, isAuthenticated: true, loading: false })
       return { success: true }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Invalid credentials'
+      const msg = err.response?.data?.message
+                || err.response?.data?.error
+                || 'Invalid credentials'
       set({ loading: false, error: msg })
       return { success: false, error: msg }
     }
@@ -30,22 +42,27 @@ const useAuthStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       await authService.register({ username, email, password })
-      // Auto-login after register
+      // Auto-login after registration
       return await get().login(email, password)
     } catch (err) {
-      const msg = err.response?.data?.message || 'Registration failed'
+      const msg = err.response?.data?.message
+                || err.response?.data?.error
+                || 'Registration failed'
       set({ loading: false, error: msg })
       return { success: false, error: msg }
     }
   },
 
   logout: async () => {
-    try { await authService.logout() } catch (_) {}
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('kk-user')
+    try {
+      // Backend clears cookies and revokes refresh tokens
+      await authService.logout()
+    } catch (_) {}
     set({ user: null, isAuthenticated: false, error: null })
   },
+
+  // Update local user info after settings change (username update etc)
+  setUser: (user) => set({ user }),
 
   clearError: () => set({ error: null }),
 }))
