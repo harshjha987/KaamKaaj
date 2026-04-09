@@ -5,8 +5,12 @@ import com.harsh.KaamKaaj.user.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,8 +40,10 @@ public class AuthController {
             description = "Returns access token (15 min) and refresh token (7 days).")
     @SecurityRequirements
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.login(request, response));
     }
 
     @Operation(summary = "Refresh access token",
@@ -45,8 +51,9 @@ public class AuthController {
     @SecurityRequirements
     @PostMapping("/refresh")
     public ResponseEntity<RefreshTokenResponse> refresh(
-            @Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refresh(request));
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.refresh(request, response));
     }
 
     @Operation(summary = "Get current user profile")
@@ -59,8 +66,11 @@ public class AuthController {
     @Operation(summary = "Logout",
             description = "Revokes all refresh tokens. All devices will need to log in again.")
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails principal) {
-        return ResponseEntity.ok(authService.logout(principal.getUsername()));
+    public ResponseEntity<String> logout(
+            @AuthenticationPrincipal UserDetails principal,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(
+                authService.logout(principal.getUsername(), response));
     }
 
     // ── Forgot Password ───────────────────────────────────

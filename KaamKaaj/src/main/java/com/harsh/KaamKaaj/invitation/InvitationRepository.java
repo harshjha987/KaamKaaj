@@ -17,6 +17,8 @@ public interface InvitationRepository extends JpaRepository<WorkspaceInvitation,
     Optional<WorkspaceInvitation> findByWorkspaceIdAndInvitedUserIdAndStatus(
             String workspaceId, String invitedUserId, InvitationStatus status);
 
+
+
     // User's inbox — all pending invitations addressed to them
     List<WorkspaceInvitation> findByInvitedUserIdAndStatus(
             String invitedUserId, InvitationStatus status);

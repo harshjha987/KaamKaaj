@@ -49,6 +49,7 @@ public class InvitationService {
     // If the caller is not an admin, Spring throws 403
     // before a single line of this method executes.
     @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
+    @Transactional
     public InvitationResponse sendInvitation(String workspaceId,
                                              SendInvitationRequest request,
                                              Authentication authentication) {
@@ -62,47 +63,47 @@ public class InvitationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "User not found: " + request.getInvitedUserId()));
 
-        User inviter = userRepo.findById(principal.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));
-
         // Guard 1: Can't invite yourself
         if (invitedUser.getId().equals(principal.getUserId())) {
             throw new DuplicateResourceException("You cannot invite yourself");
         }
 
-        // Guard 2: Can't invite someone who is already an active member
-        memberRepository.findByWorkspaceIdAndUserId(workspaceId, invitedUser.getId())
-                .ifPresent(member -> {
-                    if (member.getStatus() == MemberStatus.ACTIVE) {
-                        throw new DuplicateResourceException(
-                                "User is already an active member of this workspace");
-                    }
-                });
+        // Guard 2: Can't invite someone who is already an ACTIVE member
+        // Note: if they LEFT (status != ACTIVE) they can be re-invited
+        boolean isActiveMember = memberRepository
+                .findByWorkspaceIdAndUserId(workspaceId, invitedUser.getId())
+                .map(m -> m.getStatus() == MemberStatus.ACTIVE)
+                .orElse(false);
 
-        // Guard 3: Can't send a duplicate pending invitation
-        // If one already exists with PENDING status, reject it.
-        // In sendInvitation() — replace this block:
+        if (isActiveMember) {
+            throw new DuplicateResourceException(
+                    "This user is already an active member of the workspace");
+        }
 
-// Guard 3: Can't send a duplicate pending invitation
-// Only block if there's already a PENDING invitation.
-// DECLINED or CANCELLED invitations allow re-inviting.
-        invitationRepository.findByWorkspaceIdAndInvitedUserIdAndStatus(
+        // Guard 3: Can't send duplicate PENDING invitation
+        // DECLINED, CANCELLED, ACCEPTED are all fine — allow re-invite
+        boolean hasPendingInvitation = invitationRepository
+                .findByWorkspaceIdAndInvitedUserIdAndStatus(
                         workspaceId, invitedUser.getId(), InvitationStatus.PENDING)
-                .ifPresent(existing -> {
-                    throw new DuplicateResourceException(
-                            "A pending invitation already exists for this user. " +
-                                    "Cancel it first before sending a new one.");
-                });
+                .isPresent();
+
+        if (hasPendingInvitation) {
+            throw new DuplicateResourceException(
+                    "A pending invitation already exists for this user. " +
+                            "Cancel it first before sending a new one.");
+        }
+
+        User invitedBy = userRepo.findById(principal.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         WorkspaceInvitation invitation = new WorkspaceInvitation();
         invitation.setWorkspace(workspace);
         invitation.setInvitedUser(invitedUser);
-        invitation.setInvitedBy(inviter);
+        invitation.setInvitedBy(invitedBy);
         invitation.setStatus(InvitationStatus.PENDING);
 
         return invitationMapper.toResponse(invitationRepository.save(invitation));
     }
-
     // Admin views all invitations sent in their workspace
     @PreAuthorize("@workspaceAuthz.isAdmin(#workspaceId, authentication)")
     public List<InvitationResponse> getWorkspaceInvitations(String workspaceId,

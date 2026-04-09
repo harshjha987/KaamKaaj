@@ -1,11 +1,28 @@
 import api from './api'
 
+// export const authService = {
+//   register: (data) => api.post('/auth/register', { userName: data.username, email: data.email, password: data.password }),
+//   login:    (data) => api.post('/auth/login', { email: data.email, password: data.password }),
+//   refresh:  (refreshToken) => api.post('/auth/refresh', { refreshToken }),
+//   me:       () => api.get('/auth/me'),
+//   logout:   () => api.post('/auth/logout'),
+//   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+//   resetPassword:  (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
+// }
 export const authService = {
-  register: (data) => api.post('/auth/register', { userName: data.username, email: data.email, password: data.password }),
-  login:    (data) => api.post('/auth/login', { email: data.email, password: data.password }),
-  refresh:  (refreshToken) => api.post('/auth/refresh', { refreshToken }),
-  me:       () => api.get('/auth/me'),
-  logout:   () => api.post('/auth/logout'),
+  register: (data) => api.post('/auth/register', {
+    userName: data.username,
+    email: data.email,
+    password: data.password,
+  }),
+  login:   (data) => api.post('/auth/login', {
+    email: data.email,
+    password: data.password,
+  }),
+  // Refresh reads cookie automatically — empty body
+  refresh: () => api.post('/auth/refresh', {}),
+  me:      () => api.get('/auth/me'),
+  logout:  () => api.post('/auth/logout'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword:  (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
 }

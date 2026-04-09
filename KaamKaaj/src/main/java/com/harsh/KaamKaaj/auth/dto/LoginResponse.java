@@ -1,18 +1,18 @@
 package com.harsh.KaamKaaj.auth.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {
-    private String accessToken;
-    private String refreshToken;  // NEW — added for refresh token flow
-    private String tokenType;
-    private long expiresIn;
+    // No tokens here — they are set as HttpOnly cookies by the controller
+    private String userId;
+    private String username;
     private String email;
+    private String role;
 }

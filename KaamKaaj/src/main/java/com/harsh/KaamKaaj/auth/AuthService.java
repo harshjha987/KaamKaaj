@@ -9,12 +9,18 @@ import com.harsh.KaamKaaj.user.User;
 import com.harsh.KaamKaaj.user.UserRepo;
 import com.harsh.KaamKaaj.user.dto.UserResponse;
 import com.harsh.KaamKaaj.user.mapper.UserMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.Instant;
 
 @Service
 public class AuthService {
@@ -25,19 +31,21 @@ public class AuthService {
     private final JWTService jwtService;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public AuthService(UserRepo userRepo,
                        UserMapper userMapper,
                        BCryptPasswordEncoder encoder,
                        JWTService jwtService,
                        AuthenticationManager authenticationManager,
-                       RefreshTokenService refreshTokenService) {
+                       RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository) {
         this.userRepo = userRepo;
         this.encoder = encoder;
         this.userMapper = userMapper;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.refreshTokenService = refreshTokenService;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -70,33 +78,47 @@ public class AuthService {
     //   4. When the API returns 401, use the refresh token
     //      to get a new access token silently
     // -------------------------------------------------------
+
+    private void setTokenCookie(HttpServletResponse response,
+                                String name, String value,
+                                int maxAgeSeconds) {
+        ResponseCookie cookie = ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(false)        // ← change to true when deploying to HTTPS
+                .path("/")
+                .maxAge(maxAgeSeconds)
+                .sameSite("Lax")      // protects against CSRF
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
     @Transactional
-    public LoginResponse login(LoginRequest request) {
-        String normalizedEmail = request.getEmail().trim().toLowerCase();
+    public LoginResponse login(LoginRequest request, HttpServletResponse response) {
+        User user = userRepo.findByEmail(request.getEmail().trim().toLowerCase())
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(normalizedEmail, request.getPassword())
-        );
-
-        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+        if (!encoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
 
         String accessToken = jwtService.generateToken(
-                principal.getUsername(),
-                principal.getUserId(),
-                principal.getRole()
+                user.getEmail(),
+                user.getId(),
+                user.getRole().name()
         );
+        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        // Create and persist the refresh token
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(principal.getUser());
+        // Set tokens as HttpOnly cookies — never exposed to JavaScript
+        setTokenCookie(response, "accessToken",  accessToken,  900);           // 15 min
+        setTokenCookie(response, "refreshToken", refreshToken, 7 * 24 * 3600); // 7 days
 
-        return new LoginResponse(
-                accessToken,
-                refreshToken.getToken(),
-                "Bearer",
-                jwtService.getJwtExpiration(),
-                principal.getUsername()
-        );
+        return LoginResponse.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
     }
+
 
     // -------------------------------------------------------
     // Refresh — the client calls this when the access token
@@ -109,27 +131,58 @@ public class AuthService {
     // The client must replace its stored tokens with the new ones.
     // -------------------------------------------------------
     @Transactional
-    public RefreshTokenResponse refresh(RefreshTokenRequest request) {
-        // validate() throws if invalid or revoked
-        RefreshToken oldToken = refreshTokenService.validateRefreshToken(request.getRefreshToken());
+    public RefreshTokenResponse refresh(HttpServletRequest request,
+                                        HttpServletResponse response) {
+        // Read refresh token from cookie
+        String refreshTokenValue = null;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshTokenValue = cookie.getValue();
+                    break;
+                }
+            }
+        }
 
-        // Rotate — old token is now revoked, new one is issued
-        RefreshToken newRefreshToken = refreshTokenService.rotateRefreshToken(oldToken);
+        if (refreshTokenValue == null) {
+            throw new ResourceNotFoundException("No refresh token found");
+        }
 
-        User user = oldToken.getUser();
+        // Validate and rotate — existing refresh token logic
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid refresh token"));
+
+        if (refreshToken.isRevoked()) {
+            // Reuse detected — revoke all tokens for this user
+            refreshTokenRepository.revokeAllByUser(refreshToken.getUser());
+            throw new ResourceNotFoundException("Refresh token reuse detected. Please log in again.");
+        }
+
+        if (refreshToken.getExpiresAt().isBefore(Instant.now())) {
+            throw new ResourceNotFoundException("Refresh token expired. Please log in again.");
+        }
+
+        // Rotate — revoke old, issue new
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
+
+        User user = refreshToken.getUser();
         String newAccessToken = jwtService.generateToken(
                 user.getEmail(),
                 user.getId(),
                 user.getRole().name()
         );
+        String newRefreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        return new RefreshTokenResponse(
-                newAccessToken,
-                newRefreshToken.getToken(),
-                "Bearer",
-                jwtService.getJwtExpiration()
-        );
+        // Set new tokens as cookies
+        setTokenCookie(response, "accessToken",  newAccessToken,  900);
+        setTokenCookie(response, "refreshToken", newRefreshToken, 7 * 24 * 3600);
+
+        return RefreshTokenResponse.builder()
+                .message("Tokens refreshed successfully")
+                .build();
     }
+
 
     // -------------------------------------------------------
     // Logout — revoke ALL refresh tokens for this user.
@@ -141,11 +194,18 @@ public class AuthService {
     // revocation, you'd add a Redis blocklist (Option I later).
     // -------------------------------------------------------
     @Transactional
-    public String logout(String email) {
+    public String logout(String email, HttpServletResponse response) {
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        refreshTokenService.revokeAllTokensForUser(user);
-        return "Logged out successfully. All sessions have been invalidated.";
+
+        // Revoke all refresh tokens
+        refreshTokenRepository.revokeAllByUser(user);
+
+        // Clear cookies by setting maxAge to 0
+        setTokenCookie(response, "accessToken",  "", 0);
+        setTokenCookie(response, "refreshToken", "", 0);
+
+        return "Logged out successfully";
     }
 
     public UserResponse getProfile(String email) {
