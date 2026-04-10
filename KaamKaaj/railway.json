@@ -1,10 +1,16 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "mvn clean package -DskipTests"
+    "buildCommand": "mvn clean package -DskipTests",
+    "nixpacksPlan": {
+      "providers": ["java"],
+      "variables": {
+        "NIXPACKS_JDK_VERSION": "21"
+      }
+    }
   },
   "deploy": {
-    "startCommand": "java -jar target/kaamkaaj-0.0.1-SNAPSHOT.jar",
+    "startCommand": "java -Xmx400m -jar target/kaamkaaj-0.0.1-SNAPSHOT.jar",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
