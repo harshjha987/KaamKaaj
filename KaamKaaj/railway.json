@@ -1,7 +1,7 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "java -version && mvn clean package -DskipTests --no-transfer-progress",
+    "buildCommand": "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java)))) && export JAVA_HOME && echo \"JAVA_HOME=$JAVA_HOME\" && mvn clean package -DskipTests --no-transfer-progress",
     "nixpacksPlan": {
       "providers": ["java"],
       "variables": {
