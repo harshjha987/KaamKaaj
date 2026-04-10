@@ -1,6 +1,7 @@
 package com.harsh.KaamKaaj.security;
 
 import com.harsh.KaamKaaj.security.jwt.JwtFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,6 +32,9 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
     private final AuthEntryPoint authEntryPoint;
     private final AppAccessDeniedHandler accessDeniedHandler;
+
+    @Value("${app.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     public SecurityConfig(
             UserDetailsService userDetailsService,
@@ -111,7 +115,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                frontendUrl
         ));
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

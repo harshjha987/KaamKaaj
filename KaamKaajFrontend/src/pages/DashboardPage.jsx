@@ -27,7 +27,7 @@ function buildActivityFeed(workspaces, memberships, allTasks, invitations, assig
         text: mem.role === 'ADMIN'
           ? `You created workspace <b>${ws.name}</b>`
           : `You joined workspace <b>${ws.name}</b>`,
-        time: ws.createdAt,
+         time:  mem.role === 'ADMIN' ? ws.createdAt : mem.joinedAt
       })
     }
   })
