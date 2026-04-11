@@ -84,10 +84,10 @@ public class AuthService {
                                 int maxAgeSeconds) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .httpOnly(true)
-                .secure(false)        // ← change to true when deploying to HTTPS
+                .secure(true)
                 .path("/")
                 .maxAge(maxAgeSeconds)
-                .sameSite("Lax")      // protects against CSRF
+                .sameSite("None")  // required for cross-domain cookies
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
