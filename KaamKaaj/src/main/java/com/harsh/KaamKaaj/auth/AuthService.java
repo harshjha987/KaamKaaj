@@ -49,8 +49,10 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
+
         String email = request.getEmail().trim().toLowerCase();
         String username = request.getUserName().trim();
+        System.out.println("Received password: " + request.getPassword());
 
         if (userRepo.existsByUsername(username)) {
             throw new DuplicateResourceException("Username '" + username + "' is already taken");
@@ -58,7 +60,7 @@ public class AuthService {
         if (userRepo.existsByEmail(email)) {
             throw new DuplicateResourceException("Email '" + email + "' is already registered");
         }
-
+        System.out.println("Received password: " + request.getPassword());
         User user = userMapper.toEntity(request);
         user.setPasswordHash(encoder.encode(request.getPassword()));
         return userMapper.toResponse(userRepo.save(user));

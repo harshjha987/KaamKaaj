@@ -103,9 +103,8 @@ export function StatsSection() {
             Productivity without the noise.
           </h2>
           <p style={{ fontSize: '1rem', fontWeight: 300, color: 'var(--text2)', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-            KaamKaaj is a full-stack task management platform built with Spring Boot and React.
-            It combines role-based access control, JWT authentication, and multi-workspace isolation
-            into a clean, focused tool for teams that actually want to get things done.
+            KaamKaaj is a streamlined task management platform designed for teams that value clarity over complexity.
+             It keeps your projects organized, your data secure, and your focus sharp.
           </p>
         </div>
 
