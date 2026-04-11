@@ -1,23 +1,22 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Shield, Inbox, Building2, Zap, BarChart3, Search } from 'lucide-react'
+import { Shield, Inbox, Building2, CalendarClock, BarChart3, Search } from 'lucide-react'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import useAuthStore from '../../store/authStore'
 
 const FEATURES = [
-  { icon: Shield,    title: 'Role-based access',        desc: 'Admins manage workspaces, members execute. Fine-grained permissions that make sense for real teams.',    accent: 'var(--violet)' },
-  { icon: Inbox,     title: 'Smart assignment inbox',   desc: "Tasks come to you as requests. Accept what matters, decline what doesn't. Your work, your control.",     accent: 'var(--cyan)'   },
-  { icon: Building2, title: 'Multi-workspace isolation', desc: 'Belong to multiple workspaces with complete data isolation. W1 never bleeds into W2.',                accent: '#4F46E5'       },
-  { icon: Zap,       title: 'JWT authentication',       desc: 'Stateless, fast, and secure. Access tokens rotate every 15 minutes. Refresh tokens live 7 days.',         accent: 'var(--violet)' },
-  { icon: BarChart3, title: 'Task state machine',       desc: 'Every status transition is intentional. NOT_STARTED → IN_PROGRESS → COMPLETED. No going back.',           accent: 'var(--cyan)'   },
-  { icon: Search,    title: 'Privacy-safe search',      desc: 'Find users to invite without exposing their workspace memberships. Search returns identity, never context.',accent: '#4F46E5'       },
+  { icon: Shield,        title: 'Role-based access',        desc: 'Admins manage workspaces, members execute. Fine-grained permissions that make sense for real teams.',          accent: 'var(--violet)' },
+  { icon: Inbox,         title: 'Smart assignment inbox',   desc: "Tasks come to you as requests. Accept what matters, decline what doesn't. Your work, your control.",           accent: 'var(--cyan)'   },
+  { icon: Building2,     title: 'Multi-workspace isolation', desc: 'Belong to multiple workspaces with complete data isolation. W1 never bleeds into W2.',                        accent: '#4F46E5'       },
+  { icon: CalendarClock, title: 'Due dates & priorities',   desc: 'Set deadlines and mark tasks as Low, Medium, High, or Critical. Always know what needs attention first.',      accent: 'var(--violet)' },
+  { icon: BarChart3,     title: 'Task state machine',       desc: 'Every status transition is intentional. NOT_STARTED → IN_PROGRESS → COMPLETED. No going back.',                accent: 'var(--cyan)'   },
+  { icon: Search,        title: 'Privacy-safe search',      desc: 'Find users to invite without exposing their workspace memberships. Search returns identity, never context.',    accent: '#4F46E5'       },
 ]
 
 export function FeaturesSection() {
   const ref = useScrollReveal()
   return (
-    <section id="features" style={{ padding: '6rem 1.5rem' }}>
+    <section id="features" style={{ padding: 'clamp(3rem,6vw,6rem) clamp(1rem,4vw,1.5rem)' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div ref={ref} className="reveal">
           <div style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--violet)', marginBottom: '0.75rem' }}>
@@ -31,10 +30,16 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+        <div className="feat-grid" style={{ display: 'grid', gap: '1.25rem' }}>
           {FEATURES.map((f, i) => <FeatureCard key={f.title} {...f} delay={i * 0.08} />)}
         </div>
       </div>
+
+      <style>{`
+        .feat-grid { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 900px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .feat-grid { grid-template-columns: 1fr; } }
+      `}</style>
     </section>
   )
 }
@@ -83,15 +88,13 @@ function FeatureCard({ icon: Icon, title, desc, accent, delay }) {
 export function StatsSection() {
   const ref = useScrollReveal()
   return (
-    // id="about" — this is what the Navbar "About" link scrolls to
     <section id="about" style={{
-      padding: '5rem 1.5rem',
+      padding: 'clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)',
       background: 'var(--bg3)',
       borderTop: '1px solid var(--border)',
       borderBottom: '1px solid var(--border)',
     }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
-        {/* About intro */}
         <div ref={ref} className="reveal" style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <div style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--violet)', marginBottom: '0.75rem' }}>
             About KaamKaaj
@@ -106,8 +109,7 @@ export function StatsSection() {
           </p>
         </div>
 
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '2rem', textAlign: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '2rem', textAlign: 'center' }}>
           {[
             { num: '10x',  label: 'Faster task delivery' },
             { num: '∞',    label: 'Workspaces you can create' },
@@ -140,7 +142,7 @@ export function CTASection() {
   const ref = useScrollReveal()
 
   return (
-    <section style={{ padding: '6rem 1.5rem', textAlign: 'center' }}>
+    <section style={{ padding: 'clamp(3rem,6vw,6rem) clamp(1rem,4vw,1.5rem)', textAlign: 'center' }}>
       <div ref={ref} className="reveal" style={{ maxWidth: 600, margin: '0 auto' }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem,4vw,2.75rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '1rem', color: 'var(--text)' }}>
           Ready to ship?
@@ -173,7 +175,7 @@ export function CTASection() {
 
 export function Footer() {
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', padding: '2.5rem 1.5rem' }}>
+    <footer style={{ borderTop: '1px solid var(--border)', padding: 'clamp(1.5rem,3vw,2.5rem) clamp(1rem,4vw,1.5rem)' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, background: 'var(--grad2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
