@@ -30,7 +30,7 @@ export default function AuthPage() {
             The task management platform for teams that mean business.
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-            {['JWT Auth', 'Multi-workspace', 'Role-based', 'Spring Boot', 'Stateless'].map((pill) => (
+            {['Ship faster', 'Stay organized', 'Team-ready', 'Always in sync', 'Zero noise'].map((pill) => (
               <span key={pill} style={{ fontSize: '0.72rem', padding: '0.3rem 0.8rem', borderRadius: 99, border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(10px)' }}>
                 {pill}
               </span>

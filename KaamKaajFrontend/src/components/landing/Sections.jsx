@@ -1,17 +1,16 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Shield, Inbox, Building2, Zap, BarChart3, Search } from 'lucide-react'
+import { Shield, Inbox, Building2, CalendarClock, BarChart3, Search } from 'lucide-react'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import useAuthStore from '../../store/authStore'
 
 const FEATURES = [
-  { icon: Shield,    title: 'Role-based access',        desc: 'Admins manage workspaces, members execute. Fine-grained permissions that make sense for real teams.',    accent: 'var(--violet)' },
-  { icon: Inbox,     title: 'Smart assignment inbox',   desc: "Tasks come to you as requests. Accept what matters, decline what doesn't. Your work, your control.",     accent: 'var(--cyan)'   },
-  { icon: Building2, title: 'Multi-workspace isolation', desc: 'Belong to multiple workspaces with complete data isolation. W1 never bleeds into W2.',                accent: '#4F46E5'       },
-  { icon: Zap,       title: 'JWT authentication',       desc: 'Stateless, fast, and secure. Access tokens rotate every 15 minutes. Refresh tokens live 7 days.',         accent: 'var(--violet)' },
-  { icon: BarChart3, title: 'Task state machine',       desc: 'Every status transition is intentional. NOT_STARTED → IN_PROGRESS → COMPLETED. No going back.',           accent: 'var(--cyan)'   },
-  { icon: Search,    title: 'Privacy-safe search',      desc: 'Find users to invite without exposing their workspace memberships. Search returns identity, never context.',accent: '#4F46E5'       },
+  { icon: Shield,        title: 'Role-based access',        desc: 'Admins manage workspaces, members execute. Fine-grained permissions that make sense for real teams.',          accent: 'var(--violet)' },
+  { icon: Inbox,         title: 'Smart assignment inbox',   desc: "Tasks come to you as requests. Accept what matters, decline what doesn't. Your work, your control.",           accent: 'var(--cyan)'   },
+  { icon: Building2,     title: 'Multi-workspace isolation', desc: 'Belong to multiple workspaces with complete data isolation. W1 never bleeds into W2.',                        accent: '#4F46E5'       },
+  { icon: CalendarClock, title: 'Due dates & priorities',   desc: 'Set deadlines and mark tasks as Low, Medium, High, or Critical. Always know what needs attention first.',      accent: 'var(--violet)' },
+  { icon: BarChart3,     title: 'Task state machine',       desc: 'Every status transition is intentional. NOT_STARTED → IN_PROGRESS → COMPLETED. No going back.',                accent: 'var(--cyan)'   },
+  { icon: Search,        title: 'Privacy-safe search',      desc: 'Find users to invite without exposing their workspace memberships. Search returns identity, never context.',    accent: '#4F46E5'       },
 ]
 
 export function FeaturesSection() {
@@ -31,10 +30,16 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+        <div className="feat-grid" style={{ display: 'grid', gap: '1.25rem' }}>
           {FEATURES.map((f, i) => <FeatureCard key={f.title} {...f} delay={i * 0.08} />)}
         </div>
       </div>
+
+      <style>{`
+        .feat-grid { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 900px) { .feat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .feat-grid { grid-template-columns: 1fr; } }
+      `}</style>
     </section>
   )
 }
