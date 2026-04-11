@@ -34,6 +34,7 @@ export default function RegisterForm({ onSwitch }) {
       addToast(result.error || 'Registration failed', 'error')
     }
   }
+ const pwRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/
 
   return (
     <motion.div
@@ -71,7 +72,7 @@ export default function RegisterForm({ onSwitch }) {
         <Input
           label="Password"
           type="password"
-          placeholder="Min 8 chars, upper + lower + number + symbol"
+          placeholder="Min 8 chars, upper + lower + number + symbol (@$!%*?&)"
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           error={errors.password}

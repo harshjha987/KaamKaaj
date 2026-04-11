@@ -27,8 +27,8 @@ public class RegisterRequest {
     @Size(min = 8, max = 16, message = "Password must be 8-16 characters")
 
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[#@$!%*?&]).{8,16}$",
-            message = "Password must have uppercase, lowercase, number, and special character"
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).{8,16}$",
+            message = "Password must have uppercase, lowercase, number, and special character (@$!%*?&)"
     )
     @ToString.Exclude
     private String password;
