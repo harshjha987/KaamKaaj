@@ -12,15 +12,16 @@ export default function AuthPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', paddingTop: 64 }}>
-      {/* LEFT BRAND PANEL */}
-      <div style={{
+
+      {/* LEFT BRAND PANEL — hidden on mobile */}
+      <div className="auth-brand-panel" style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '4rem 3rem',
         background: 'linear-gradient(135deg,#1a0533 0%,#0c1a3a 50%,#03181f 100%)',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'var(--violet)', top: -100, right: -100, filter: 'blur(60px)', opacity: 0.3 }} />
-        <div style={{ position: 'absolute', width: 350, height: 350, borderRadius: '50%', background: 'var(--cyan)', bottom: -100, left: -100, filter: 'blur(60px)', opacity: 0.3 }} />
+        <div style={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'var(--violet)', top: -100, right: -100, filter: 'blur(60px)', opacity: 0.3, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', width: 350, height: 350, borderRadius: '50%', background: 'var(--cyan)', bottom: -100, left: -100, filter: 'blur(60px)', opacity: 0.3, pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 340 }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 800, background: 'linear-gradient(135deg,#A78BFA,#67E8F9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: '1rem', letterSpacing: '-0.03em' }}>
             KaamKaaj
@@ -39,7 +40,11 @@ export default function AuthPage() {
       </div>
 
       {/* RIGHT FORM PANEL */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4rem 3rem' }}>
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '2rem 1.25rem',
+        background: 'var(--bg)', minWidth: 0,
+      }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
           {/* Tabs */}
           <div style={{ display: 'flex', background: 'var(--bg2)', borderRadius: 'var(--radius)', padding: '0.3rem', marginBottom: '2rem', border: '1px solid var(--border)' }}>
@@ -50,8 +55,8 @@ export default function AuthPage() {
                 transition: 'var(--transition)', textAlign: 'center',
                 border: 'none', fontFamily: 'var(--font-body)',
                 background: tab === t.key ? 'var(--bg3)' : 'none',
-                color: tab === t.key ? 'var(--text)' : 'var(--text2)',
-                boxShadow: tab === t.key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                color:      tab === t.key ? 'var(--text)' : 'var(--text2)',
+                boxShadow:  tab === t.key ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
               }}>{t.label}</button>
             ))}
           </div>
@@ -64,6 +69,13 @@ export default function AuthPage() {
           </AnimatePresence>
         </div>
       </div>
+
+      <style>{`
+        .auth-brand-panel { display: flex; }
+        @media (max-width: 768px) {
+          .auth-brand-panel { display: none !important; }
+        }
+      `}</style>
     </div>
   )
 }

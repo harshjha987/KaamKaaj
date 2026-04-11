@@ -17,7 +17,7 @@ const FEATURES = [
 export function FeaturesSection() {
   const ref = useScrollReveal()
   return (
-    <section id="features" style={{ padding: '6rem 1.5rem' }}>
+    <section id="features" style={{ padding: 'clamp(3rem,6vw,6rem) clamp(1rem,4vw,1.5rem)' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div ref={ref} className="reveal">
           <div style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--violet)', marginBottom: '0.75rem' }}>
@@ -31,7 +31,7 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
           {FEATURES.map((f, i) => <FeatureCard key={f.title} {...f} delay={i * 0.08} />)}
         </div>
       </div>
@@ -83,15 +83,13 @@ function FeatureCard({ icon: Icon, title, desc, accent, delay }) {
 export function StatsSection() {
   const ref = useScrollReveal()
   return (
-    // id="about" — this is what the Navbar "About" link scrolls to
     <section id="about" style={{
-      padding: '5rem 1.5rem',
+      padding: 'clamp(3rem,6vw,5rem) clamp(1rem,4vw,1.5rem)',
       background: 'var(--bg3)',
       borderTop: '1px solid var(--border)',
       borderBottom: '1px solid var(--border)',
     }}>
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
-        {/* About intro */}
         <div ref={ref} className="reveal" style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <div style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--violet)', marginBottom: '0.75rem' }}>
             About KaamKaaj
@@ -106,8 +104,7 @@ export function StatsSection() {
           </p>
         </div>
 
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '2rem', textAlign: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '2rem', textAlign: 'center' }}>
           {[
             { num: '10x',  label: 'Faster task delivery' },
             { num: '∞',    label: 'Workspaces you can create' },
@@ -140,7 +137,7 @@ export function CTASection() {
   const ref = useScrollReveal()
 
   return (
-    <section style={{ padding: '6rem 1.5rem', textAlign: 'center' }}>
+    <section style={{ padding: 'clamp(3rem,6vw,6rem) clamp(1rem,4vw,1.5rem)', textAlign: 'center' }}>
       <div ref={ref} className="reveal" style={{ maxWidth: 600, margin: '0 auto' }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem,4vw,2.75rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '1rem', color: 'var(--text)' }}>
           Ready to ship?
@@ -173,7 +170,7 @@ export function CTASection() {
 
 export function Footer() {
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', padding: '2.5rem 1.5rem' }}>
+    <footer style={{ borderTop: '1px solid var(--border)', padding: 'clamp(1.5rem,3vw,2.5rem) clamp(1rem,4vw,1.5rem)' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, background: 'var(--grad2)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
