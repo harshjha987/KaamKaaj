@@ -18,7 +18,7 @@ export default function RegisterForm({ onSwitch }) {
     if (!form.username || form.username.length < 3) e.username = 'Username must be 3–15 characters'
     if (!form.email) e.email = 'Email is required'
     const pwRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/
-    if (!pwRe.test(form.password)) e.password = 'Min 8 chars with upper, lower, number & symbol'
+    if (!pwRe.test(form.password)) e.password = 'Min 8 chars with upper, lower, number & special character (@$!%*?&) — # not supported'
     setErrors(e)
     return Object.keys(e).length === 0
   }

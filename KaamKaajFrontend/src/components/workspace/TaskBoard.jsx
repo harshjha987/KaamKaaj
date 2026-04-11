@@ -35,7 +35,7 @@ export default function TaskBoard({
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+      <div className="task-board-grid" style={{ display: 'grid', gap: '1rem' }}>
         {COLUMNS.map((col) => (
           <div key={col.key} style={{
             background: 'var(--bg2)', borderRadius: 'var(--radius)',
@@ -96,6 +96,11 @@ export default function TaskBoard({
         onStatusUpdate={onStatusUpdate}
         onDelete={onDelete}
       />
+      <style>{`
+      .task-board-grid { grid-template-columns: repeat(3, 1fr); }
+      @media (max-width: 900px) { .task-board-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 560px) { .task-board-grid { grid-template-columns: 1fr; } }
+    `}</style>
     </>
   )
 }

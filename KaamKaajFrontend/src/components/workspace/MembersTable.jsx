@@ -34,8 +34,22 @@ export default function MembersTable({ members = [], workspaceId, myRole, onRefr
 
   return (
     <>
+      <style>{`
+        .members-table { width: 100%; border-collapse: collapse; }
+        .members-table th, .members-table td { display: table-cell; }
+        .member-card { display: none; }
+
+        @media (max-width: 640px) {
+          .members-table thead { display: none; }
+          .members-table tbody tr { display: none; }
+          .member-card { display: block; }
+        }
+      `}</style>
+
       <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+
+        {/* ── DESKTOP TABLE ── */}
+        <table className="members-table">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {['Member', 'Email', 'Role', 'Joined', ...(myRole === 'ADMIN' ? ['Actions'] : [])].map((h) => (
@@ -67,13 +81,11 @@ export default function MembersTable({ members = [], workspaceId, myRole, onRefr
                     <td style={{ padding: '0.75rem 1rem' }}>
                       {!isMe && (
                         <div style={{ display: 'flex', gap: '0.4rem' }}>
-                          <button
-                            onClick={() => setPromoting(m)}
+                          <button onClick={() => setPromoting(m)}
                             style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--violet-alpha)', color: 'var(--violet)', border: '1px solid rgba(124,58,237,0.2)', transition: 'var(--transition)' }}
                           >{m.role === 'ADMIN' ? 'Demote' : 'Promote'}</button>
                           {m.role !== 'ADMIN' && (
-                            <button
-                              onClick={() => setRemoving(m)}
+                            <button onClick={() => setRemoving(m)}
                               style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'rgba(220,38,38,0.08)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.15)', transition: 'var(--transition)' }}
                             >Remove</button>
                           )}
@@ -87,6 +99,45 @@ export default function MembersTable({ members = [], workspaceId, myRole, onRefr
             })}
           </tbody>
         </table>
+
+        {/* ── MOBILE CARDS ── */}
+        {members.map((m) => {
+          const isMe = m.email === user?.email
+          return (
+            <div key={m.memberId} className="member-card" style={{
+              padding: '1rem', borderBottom: '1px solid var(--border)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <Avatar name={m.username} size={32} />
+                  <div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text)' }}>
+                      {m.username}
+                      {isMe && <span style={{ fontSize: '0.68rem', color: 'var(--text3)', marginLeft: '0.3rem' }}>(you)</span>}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text3)' }}>{m.email}</div>
+                  </div>
+                </div>
+                <RoleBadge role={m.role} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text3)' }}>Joined {formatDate(m.joinedAt)}</span>
+                {myRole === 'ADMIN' && !isMe && (
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button onClick={() => setPromoting(m)}
+                      style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--violet-alpha)', color: 'var(--violet)', border: '1px solid rgba(124,58,237,0.2)' }}
+                    >{m.role === 'ADMIN' ? 'Demote' : 'Promote'}</button>
+                    {m.role !== 'ADMIN' && (
+                      <button onClick={() => setRemoving(m)}
+                        style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'rgba(220,38,38,0.08)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.15)' }}
+                      >Remove</button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Remove confirm modal */}
@@ -98,7 +149,10 @@ export default function MembersTable({ members = [], workspaceId, myRole, onRefr
       </Modal>
 
       {/* Promote/demote confirm modal */}
-      <Modal open={!!promoting} onClose={() => setPromoting(null)} title={promoting?.role === 'ADMIN' ? 'Demote to Member' : 'Promote to Admin'} subtitle={promoting?.role === 'ADMIN' ? `${promoting?.username} will lose admin privileges` : `${promoting?.username} will gain full admin access`}>
+      <Modal open={!!promoting} onClose={() => setPromoting(null)}
+        title={promoting?.role === 'ADMIN' ? 'Demote to Member' : 'Promote to Admin'}
+        subtitle={promoting?.role === 'ADMIN' ? `${promoting?.username} will lose admin privileges` : `${promoting?.username} will gain full admin access`}
+      >
         <ModalFooter>
           <Button variant="ghost" size="sm" onClick={() => setPromoting(null)}>Cancel</Button>
           <Button variant="primary" size="sm" onClick={() => handlePromote(promoting, promoting?.role === 'ADMIN' ? 'MEMBER' : 'ADMIN')}>

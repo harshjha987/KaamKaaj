@@ -11,7 +11,7 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
   const [showInvite, setShowInvite] = useState(false)
   const [query, setQuery]           = useState('')
   const [results, setResults]       = useState([])
-  const [searched, setSearched]     = useState(false)  // tracks if search was actually performed
+  const [searched, setSearched]     = useState(false)
   const [searching, setSearching]   = useState(false)
   const [inviting, setInviting]     = useState(false)
   const { addToast } = useToastStore()
@@ -56,7 +56,19 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
 
   return (
     <>
+      <style>{`
+        .inv-table { width: 100%; border-collapse: collapse; }
+        .inv-card { display: none; }
+        @media (max-width: 640px) {
+          .inv-table thead { display: none; }
+          .inv-table tbody tr { display: none; }
+          .inv-card { display: block; }
+        }
+      `}</style>
+
       <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+
+        {/* Header */}
         <div style={{ padding: '0.9rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)' }}>Sent Invitations</span>
           {myRole === 'ADMIN' && (
@@ -65,7 +77,9 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
             </button>
           )}
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+
+        {/* ── DESKTOP TABLE ── */}
+        <table className="inv-table">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {['User', 'Invited by', 'Status', 'Sent', ...(myRole === 'ADMIN' ? ['Actions'] : [])].map((h) => (
@@ -82,8 +96,7 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
               </tr>
             )}
             {invitations.map((inv) => (
-              <tr key={inv.id}
-                style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)' }}
+              <tr key={inv.id} style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg2)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
               >
@@ -105,20 +118,57 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
                       <button onClick={() => handleCancel(inv.id)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'rgba(220,38,38,0.08)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.15)' }}>
                         Cancel
                       </button>
-                    ) : (
-                      // Show Re-invite button for DECLINED or CANCELLED invitations
-                      (inv.status === 'DECLINED' || inv.status === 'CANCELLED') ? (
-                        <button onClick={() => handleInvite(inv.invitedUserId)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--violet-alpha)', color: 'var(--violet)', border: '1px solid rgba(124,58,237,0.2)' }}>
-                          Re-invite
-                        </button>
-                      ) : <span style={{ fontSize: '0.78rem', color: 'var(--text3)' }}>—</span>
-                    )}
+                    ) : (inv.status === 'DECLINED' || inv.status === 'CANCELLED') ? (
+                      <button onClick={() => handleInvite(inv.invitedUserId)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--violet-alpha)', color: 'var(--violet)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                        Re-invite
+                      </button>
+                    ) : <span style={{ fontSize: '0.78rem', color: 'var(--text3)' }}>—</span>}
                   </td>
                 )}
               </tr>
             ))}
           </tbody>
         </table>
+
+        {/* ── MOBILE CARDS ── */}
+        {invitations.length === 0 && (
+          <div className="inv-card" style={{ padding: '2rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--text3)' }}>
+            No invitations sent yet
+          </div>
+        )}
+        {invitations.map((inv) => (
+          <div key={inv.id} className="inv-card" style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Avatar name={inv.invitedUsername} size={30} />
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)' }}>{inv.invitedUsername}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text3)' }}>{inv.invitedUserEmail}</div>
+                </div>
+              </div>
+              <InvitationStatusBadge status={inv.status} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text3)' }}>
+                By {inv.invitedByUsername} · {formatDate(inv.createdAt)}
+              </span>
+              {myRole === 'ADMIN' && (
+                <>
+                  {inv.status === 'PENDING' && (
+                    <button onClick={() => handleCancel(inv.id)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'rgba(220,38,38,0.08)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.15)' }}>
+                      Cancel
+                    </button>
+                  )}
+                  {(inv.status === 'DECLINED' || inv.status === 'CANCELLED') && (
+                    <button onClick={() => handleInvite(inv.invitedUserId)} style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 500, fontFamily: 'var(--font-body)', background: 'var(--violet-alpha)', color: 'var(--violet)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                      Re-invite
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Invite modal */}
@@ -130,7 +180,6 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
             value={query}
             onChange={(e) => {
               setQuery(e.target.value)
-              // Clear previous results when user types new query
               if (searched) { setResults([]); setSearched(false) }
             }}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
@@ -138,7 +187,6 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
           <Button variant="primary" size="sm" loading={searching} onClick={handleSearch}>Search</Button>
         </div>
 
-        {/* Results list */}
         {results.length > 0 && (
           <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', marginBottom: '0.5rem' }}>
             {results.map((u) => (
@@ -160,7 +208,6 @@ export default function InvitationsTable({ invitations = [], workspaceId, myRole
           </div>
         )}
 
-        {/* Only show "no results" AFTER a search was performed, not while typing */}
         {searched && results.length === 0 && !searching && (
           <p style={{ fontSize: '0.8rem', color: 'var(--text3)', textAlign: 'center', padding: '1rem 0' }}>
             No users found for "{query}"
