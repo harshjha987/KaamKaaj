@@ -21,6 +21,16 @@ const NEXT_LABEL = {
   IN_PROGRESS: 'Complete',
   COMPLETED:   null,
 }
+// Add this helper at the top of the file, outside the component:
+function getOverdueDays(dueDate, status) {
+  if (!dueDate || status === 'COMPLETED') return null
+  const due  = new Date(dueDate)
+  const now  = new Date()
+  due.setHours(0, 0, 0, 0)
+  now.setHours(0, 0, 0, 0)
+  const diff = Math.floor((now - due) / 86400000)
+  return diff > 0 ? diff : null
+}
 
 export default function TaskBoard({
   tasks = [], myRole, members = [], workspaceId,
@@ -114,8 +124,9 @@ function TaskCard({ task, myRole, done, onOpenDetail, onAssign, onStatusUpdate, 
         background: 'var(--bg3)', borderRadius: 'var(--radius-sm)',
         padding: '0.85rem', marginBottom: '0.5rem',
         border: `1px solid ${
-          done        ? 'rgba(22,163,74,0.15)' :
-          wasDeclined ? 'rgba(245,158,11,0.25)' :
+          done                                       ? 'rgba(22,163,74,0.15)'  :
+          wasDeclined                                ? 'rgba(245,158,11,0.25)' :
+          getOverdueDays(task.dueDate, task.status)  ? 'rgba(220,38,38,0.25)'  :
           'var(--border)'
         }`,
         opacity: done ? 0.8 : 1,
@@ -234,6 +245,24 @@ function TaskCard({ task, myRole, done, onOpenDetail, onAssign, onStatusUpdate, 
             : task.description}
         </div>
       )}
+      {/* ── Overdue indicator ── */}
+{(() => {
+  const days = getOverdueDays(task.dueDate, task.status)
+  if (!days) return null
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.35rem',
+      padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)',
+      background: 'rgba(220,38,38,0.08)',
+      border: '1px solid rgba(220,38,38,0.2)',
+      marginBottom: '0.5rem',
+    }}>
+      <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#DC2626' }}>
+        ⚠ {days} day{days !== 1 ? 's' : ''} overdue
+      </span>
+    </div>
+  )
+})()}
 
       {/* Priority + due + avatar */}
       <div style={{

@@ -81,6 +81,11 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
   const [showLeaveWs, setShowLeaveWs]   = useState(false)
   const [leavingWs, setLeavingWs]       = useState(false)
 
+  // ── Filter state ──────────────────────────────────────────
+const [taskSearch, setTaskSearch]     = useState('')
+const [priorityFilter, setPriorityFilter] = useState('ALL') 
+const [assigneeFilter, setAssigneeFilter] = useState('ALL')
+
   if (!isAuthenticated) return <Navigate to="/auth" replace />
 
   // ── Data fetching ─────────────────────────────────────────
@@ -464,78 +469,188 @@ export default function WorkspacePage({ refreshInbox, refreshWorkspaces }) {
           >
             {/* Tasks tab */}
             {activeTab === 0 && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text3)' }}>
-                    {myRole === 'MEMBER' ? 'Your assigned tasks' : `${tasks.length} task${tasks.length !== 1 ? 's' : ''} on this page`}
-                  </span>
-                </div>
+  <>
+    {/* ── Filter bar ── */}
+    <div style={{
+      display: 'flex', gap: '0.75rem', marginBottom: '1rem',
+      flexWrap: 'wrap', alignItems: 'center',
+    }}>
+      {/* Search */}
+      <input
+        value={taskSearch}
+        onChange={(e) => setTaskSearch(e.target.value)}
+        placeholder="Search tasks..."
+        style={{
+          flex: 1, minWidth: 180, height: 36,
+          border: '1px solid var(--border2)',
+          borderRadius: 'var(--radius-sm)',
+          background: 'var(--bg3)', color: 'var(--text)',
+          fontSize: '0.85rem', padding: '0 0.85rem',
+          fontFamily: 'var(--font-body)', outline: 'none',
+          transition: 'var(--transition)',
+        }}
+        onFocus={(e) => e.target.style.borderColor = 'var(--violet)'}
+        onBlur={(e) => e.target.style.borderColor = 'var(--border2)'}
+      />
 
-                {tasks.length === 0 ? (
-                  <div style={{
-                    textAlign: 'center', padding: '5rem 2rem',
-                    background: 'var(--bg2)', borderRadius: 'var(--radius-lg)',
-                    border: '2px dashed var(--border)',
-                  }}>
-                    {myRole === 'ADMIN' ? (
-                      <>
-                        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📋</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.5rem' }}>
-                          No tasks yet
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text2)', marginBottom: '1.5rem', lineHeight: 1.6, maxWidth: 360, margin: '0 auto 1.5rem' }}>
-                          Create your first task and assign it to a workspace member to get things moving.
-                        </div>
-                        <button
-                          onClick={() => setShowCreateTask(true)}
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                            fontSize: '0.9rem', fontWeight: 500, padding: '0.7rem 1.5rem',
-                            borderRadius: 'var(--radius)', cursor: 'pointer', border: 'none',
-                            background: 'var(--grad2)', color: '#fff', fontFamily: 'var(--font-body)',
-                            boxShadow: '0 4px 16px rgba(124,58,237,0.3)', transition: 'var(--transition)',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
-                        >
-                          + Create first task
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎯</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.5rem' }}>
-                          No tasks assigned yet
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--text2)', lineHeight: 1.6 }}>
-                          Your workspace admin will assign tasks to you. Check your inbox for assignment requests.
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                 <TaskBoard
-                    tasks={tasks}
-                    myRole={myRole}
-                    members={members}
-                    workspaceId={workspaceId}
-                    onAssign={(task) => { setAssignTask(task); setShowAssign(true) }}
-                    onEdit={openEditTask}
-                    onStatusUpdate={handleStatusUpdate}
-                    onDelete={handleDelete}
-                  />
-                )}
+      {/* Priority filter */}
+      <select
+        value={priorityFilter}
+        onChange={(e) => setPriorityFilter(e.target.value)}
+        style={{
+          height: 36, border: '1px solid var(--border2)',
+          borderRadius: 'var(--radius-sm)',
+          background: 'var(--bg3)', color: 'var(--text)',
+          fontSize: '0.85rem', padding: '0 0.75rem',
+          fontFamily: 'var(--font-body)', cursor: 'pointer', outline: 'none',
+        }}
+      >
+        <option value="ALL">All priorities</option>
+        <option value="CRITICAL">Critical</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+      </select>
 
-                {myRole === 'ADMIN' && (
-                  <Pagination
-                    page={taskPage}
-                    totalPages={taskTotalPages}
-                    onPageChange={(p) => { setTaskPage(p); fetchTasks('ADMIN', p) }}
-                  />
-                )}
-              </>
-            )}
+      {/* Assignee filter — ADMIN only */}
+      {myRole === 'ADMIN' && (
+        <select
+          value={assigneeFilter}
+          onChange={(e) => setAssigneeFilter(e.target.value)}
+          style={{
+            height: 36, border: '1px solid var(--border2)',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg3)', color: 'var(--text)',
+            fontSize: '0.85rem', padding: '0 0.75rem',
+            fontFamily: 'var(--font-body)', cursor: 'pointer', outline: 'none',
+          }}
+        >
+          <option value="ALL">All assignees</option>
+          <option value="UNASSIGNED">Unassigned</option>
+          {members.filter((m) => m.role === 'MEMBER').map((m) => (
+            <option key={m.userId} value={m.username}>{m.username}</option>
+          ))}
+        </select>
+      )}
 
+      {/* Clear filters — shown when any filter is active */}
+      {(taskSearch || priorityFilter !== 'ALL' || assigneeFilter !== 'ALL') && (
+        <button
+          onClick={() => { setTaskSearch(''); setPriorityFilter('ALL'); setAssigneeFilter('ALL') }}
+          style={{
+            height: 36, padding: '0 0.75rem',
+            border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+            background: 'none', color: 'var(--text3)', fontSize: '0.82rem',
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+            transition: 'var(--transition)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.borderColor = 'var(--border2)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text3)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+        >
+          Clear filters
+        </button>
+      )}
+
+      <span style={{ fontSize: '0.78rem', color: 'var(--text3)', marginLeft: 'auto' }}>
+        {myRole === 'MEMBER'
+          ? 'Your assigned tasks'
+          : `${tasks.length} task${tasks.length !== 1 ? 's' : ''} on this page`
+        }
+      </span>
+    </div>
+
+    {/* ── Compute filtered tasks ── */}
+    {(() => {
+      const filtered = tasks.filter((t) => {
+        const matchSearch   = !taskSearch || t.title.toLowerCase().includes(taskSearch.toLowerCase())
+        const matchPriority = priorityFilter === 'ALL' || t.priority === priorityFilter
+        const matchAssignee = assigneeFilter === 'ALL'
+          ? true
+          : assigneeFilter === 'UNASSIGNED'
+            ? !t.assignedToUsername
+            : t.assignedToUsername === assigneeFilter
+        return matchSearch && matchPriority && matchAssignee
+      })
+
+      if (tasks.length === 0) return (
+        <div style={{
+          textAlign: 'center', padding: '5rem 2rem',
+          background: 'var(--bg2)', borderRadius: 'var(--radius-lg)',
+          border: '2px dashed var(--border)',
+        }}>
+          {myRole === 'ADMIN' ? (
+            <>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📋</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.5rem' }}>
+                No tasks yet
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text2)', marginBottom: '1.5rem', lineHeight: 1.6, maxWidth: 360, margin: '0 auto 1.5rem' }}>
+                Create your first task and assign it to a workspace member to get things moving.
+              </div>
+              <button
+                onClick={() => setShowCreateTask(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  fontSize: '0.9rem', fontWeight: 500, padding: '0.7rem 1.5rem',
+                  borderRadius: 'var(--radius)', cursor: 'pointer', border: 'none',
+                  background: 'var(--grad2)', color: '#fff', fontFamily: 'var(--font-body)',
+                  boxShadow: '0 4px 16px rgba(124,58,237,0.3)', transition: 'var(--transition)',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+              >
+                + Create first task
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎯</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.5rem' }}>
+                No tasks assigned yet
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text2)', lineHeight: 1.6 }}>
+                Your workspace admin will assign tasks to you. Check your inbox for assignment requests.
+              </div>
+            </>
+          )}
+        </div>
+      )
+
+      if (filtered.length === 0) return (
+        <div style={{
+          textAlign: 'center', padding: '3rem 2rem',
+          background: 'var(--bg2)', borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border)',
+        }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔍</div>
+          <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text)', marginBottom: '0.25rem' }}>No tasks match your filters</div>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text3)' }}>Try adjusting your search or filters</div>
+        </div>
+      )
+
+      return (
+        <TaskBoard
+          tasks={filtered}
+          myRole={myRole}
+          members={members}
+          workspaceId={workspaceId}
+          onAssign={(task) => { setAssignTask(task); setShowAssign(true) }}
+          onEdit={openEditTask}
+          onStatusUpdate={handleStatusUpdate}
+          onDelete={handleDelete}
+        />
+      )
+    })()}
+
+    {myRole === 'ADMIN' && (
+      <Pagination
+        page={taskPage}
+        totalPages={taskTotalPages}
+        onPageChange={(p) => { setTaskPage(p); fetchTasks('ADMIN', p) }}
+      />
+    )}
+  </>
+)}
             {/* Members tab */}
             {activeTab === 1 && (
               <>
