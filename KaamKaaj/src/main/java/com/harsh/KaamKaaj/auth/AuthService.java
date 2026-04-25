@@ -11,6 +11,7 @@ import com.harsh.KaamKaaj.user.dto.UserResponse;
 import com.harsh.KaamKaaj.user.mapper.UserMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +33,12 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    @Value("${app.cookies.secure:false}")
+    private boolean cookiesSecure;
+
+    @Value("${app.cookies.same-site:Lax}")
+    private String cookiesSameSite;
 
     public AuthService(UserRepo userRepo,
                        UserMapper userMapper,
@@ -86,10 +93,10 @@ public class AuthService {
                                 int maxAgeSeconds) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookiesSecure)
                 .path("/")
                 .maxAge(maxAgeSeconds)
-                .sameSite("None")  // required for cross-domain cookies
+                .sameSite(cookiesSameSite)  // required for cross-domain cookies
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }

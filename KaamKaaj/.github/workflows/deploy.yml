@@ -1,0 +1,25 @@
+name: Deploy KaamKaaj Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'KaamKaaj/**'        # only trigger when backend code changes
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Oracle VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/kaamkaaj/KaamKaaj
+            git pull origin main
+            mvn clean package -DskipTests
+            sudo systemctl restart kaamkaaj
+            echo "Deployment complete"
