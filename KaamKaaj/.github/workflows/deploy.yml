@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'KaamKaaj/**'        # only trigger when backend code changes
+      - 'KaamKaaj/**'
 
 jobs:
   deploy:
@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.ORACLE_USER }}
           key: ${{ secrets.ORACLE_SSH_KEY }}
           script: |
-            cd /home/ubuntu/kaamkaaj/KaamKaaj
+            cd /home/ubuntu/KaamKaaj/KaamKaaj
             git pull origin main
             mvn clean package -DskipTests
             sudo systemctl restart kaamkaaj
