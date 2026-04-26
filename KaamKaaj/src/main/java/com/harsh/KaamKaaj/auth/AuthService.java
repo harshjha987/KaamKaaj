@@ -59,7 +59,7 @@ public class AuthService {
 
         String email = request.getEmail().trim().toLowerCase();
         String username = request.getUserName().trim();
-        System.out.println("Received password: " + request.getPassword());
+        //System.out.println("Received password: " + request.getPassword());
 
         if (userRepo.existsByUsername(username)) {
             throw new DuplicateResourceException("Username '" + username + "' is already taken");
